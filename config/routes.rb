@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  post 'github_events/payload', constraints: { format: 'json' }
 
   devise_for :users
   root to: "home#index"
