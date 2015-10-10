@@ -1,3 +1,5 @@
+require 'pp'
+
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
@@ -6,12 +8,16 @@ class GithubEventsController < ApplicationController
 
   def payload
     request.body.rewind
-    payload_body = request.body.read
 
+    payload_body = request.body.read
     verify_signature(payload_body)
 
-    event = JSON.parse(payload_body)
-    Rails.logger.info("I got some JSON: #{event.inspect}")
+    if params[:pull_request][:state] == 'open'
+      puts 'open'
+      puts params[:number]
+    else
+      puts 'closed do nothing'
+    end
 
     render status: :ok, nothing: true
   rescue SignatureMismatch => e
