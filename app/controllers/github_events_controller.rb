@@ -12,9 +12,12 @@ class GithubEventsController < ApplicationController
     payload_body = request.body.read
     verify_signature(payload_body)
 
-    if params[:pull_request][:state] == 'open'
-      repo = params[:repository][:full_name]
-      number = params[:number]
+    pull_request = params.require(:pull_request)
+    repository   = params.require(:repository)
+
+    if pull_request[:state] == 'open'
+      repo = repository[:full_name]
+      number = params.require(:number)
       Rails.logger.info "New pull ##{number} for #{repo}. Running handler..."
       PullHandler.new(repo: repo, number: number).handle
     else
