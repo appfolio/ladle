@@ -1,4 +1,4 @@
-require 'pp'
+require 'pull_handler'
 
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
@@ -13,15 +13,17 @@ class GithubEventsController < ApplicationController
     verify_signature(payload_body)
 
     if params[:pull_request][:state] == 'open'
-      puts 'open'
-      puts params[:number]
+      repo = params[:repository][:full_name]
+      number = params[:number]
+      Rails.logger.info "New pull ##{number} for #{repo}. Running handler..."
+      PullHandler.new(repo: repo, number: number).handle
     else
-      puts 'closed do nothing'
+      Rails.logger.info 'Pull closed, doing nothing.'
     end
 
     render status: :ok, nothing: true
   rescue SignatureMismatch => e
-    Rails.logger.info("#{e} - #{e.message}")
+    Rails.logger.info "#{e} - #{e.message}"
     render status: :forbidden, nothing: true
   end
 
