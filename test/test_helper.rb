@@ -14,6 +14,9 @@ end
 VCR.configure do |c|
   c.cassette_library_dir = 'test/vcr_cassettes'
   c.hook_into :webmock
+  c.filter_sensitive_data('<TOKEN>') do
+    YAML.load(File.open("#{Rails.root}/config/github.yml"))['access_token']
+  end
 end
 
 module VCRHelpers

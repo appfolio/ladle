@@ -7,7 +7,6 @@ class PullHandler
   def handle
     credentials = YAML.load(File.open("#{Rails.root}/config/github.yml"))
     client = Octokit::Client.new(access_token: credentials['access_token'])
-    p client.rate_limit.to_h
 
     pr = client.pull_request(@repo, @number)
     head_sha = pr[:head][:sha]

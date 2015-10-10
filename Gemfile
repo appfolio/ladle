@@ -42,8 +42,6 @@ gem 'octokit', '~> 4.1'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'
-  gem 'webmock'
-  gem 'vcr'
 end
 
 group :development do
@@ -56,6 +54,8 @@ end
 
 group :test do
   gem 'mocha'
+  gem 'webmock'
+  gem 'vcr'
 end
 
 
