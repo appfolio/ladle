@@ -32,6 +32,7 @@ gem 'puma'
 
 gem 'devise'
 gem 'devise-bootstrap-views'
+gem 'omniauth-github'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
