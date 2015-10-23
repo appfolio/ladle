@@ -1,10 +1,13 @@
 class PullHandler
-  def initialize(repo:, number:)
+  def initialize(repo:, number:, html_url:)
     @repo = repo
     @number = number
+    @html_url = html_url
   end
 
   def handle
+    return Rails.logger.info('Pull already handled, skipping.') if already_handled?
+
     credentials = YAML.load(File.open("#{Rails.root}/config/github.yml"))
     client = Octokit::Client.new(access_token: credentials['access_token'])
 
@@ -16,7 +19,7 @@ class PullHandler
     end
 
     directories = filenames.map do |filename|
-      filename.sub(/(\/[^\/]+|[^\/]+)$/, '')
+      filename.sub(%r{(\/[^\/]+|[^\/]+)$}, '')
     end
 
     directories = directories.uniq
@@ -33,7 +36,7 @@ class PullHandler
       end
     end
 
-    stewards = stewards.uniq.map {|s| "@#{s}" }
+    stewards = stewards.uniq.map { |s| "@#{s}" }
 
     if stewards.size > 0
       message = <<-STRING
@@ -46,8 +49,14 @@ STRING
 
       Rails.logger.info("Found #{stewards.size} stewards. Posting comment.")
       client.add_comment(@repo, @number, message)
+      @pr.update_attributes(handled: true)
     else
       Rails.logger.info('No stewards found. Doing nothing.')
     end
+  end
+
+  def already_handled?
+    @pr = PullRequest.find_or_create_by(repo: @repo, number: @number, html_url: @html_url)
+    @pr.handled
   end
 end

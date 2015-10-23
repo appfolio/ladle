@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :pull_requests
   post 'github_events/payload', constraints: { format: 'json' }
 
   devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
