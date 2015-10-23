@@ -2,7 +2,7 @@ class PullRequestsController < ApplicationController
   before_action :set_pull_request, only: [:show, :edit, :update, :destroy]
 
   def index
-    @pull_requests = PullRequest.all
+    @pull_requests = PullRequest.all.order('created_at desc')
   end
 
   def show
