@@ -12,8 +12,7 @@ class PullHandler
   def handle
     return Rails.logger.info('Pull already handled, skipping.') if already_handled?
 
-    credentials = YAML.load(File.open("#{Rails.root}/config/github.yml"))
-    client = Octokit::Client.new(access_token: credentials['access_token'])
+    client = Octokit::Client.new(access_token: Rails.application.github_access_token)
 
     pr = client.pull_request(@repo, @number)
     head_sha = pr[:head][:sha]

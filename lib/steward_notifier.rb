@@ -15,8 +15,7 @@ class StewardNotifier
 
   def notify_github(usernames, emails)
     usernames = usernames.uniq.map { |s| "@#{s}" }
-    credentials = YAML.load(File.open("#{Rails.root}/config/github.yml"))
-    client = Octokit::Client.new(access_token: credentials['access_token'])
+    client = Octokit::Client.new(access_token: Rails.application.github_access_token)
 
     message = <<-STRING
 Hey, sweet pull request you got here!
