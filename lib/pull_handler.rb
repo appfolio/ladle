@@ -1,7 +1,7 @@
 require 'steward_notifier'
 
 class PullHandler
-  attr_reader :repo, :number
+  attr_reader :repo, :number, :html_url
 
   def initialize(repo:, number:, html_url:)
     @repo = repo
@@ -39,10 +39,6 @@ class PullHandler
         next
       end
     end
-
-
-
-#     stewards = stewards.uniq.map { |s| "@#{s}" }
 
     if stewards.size > 0
       Rails.logger.info("Found #{stewards.size} stewards. Notifying.")

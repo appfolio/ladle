@@ -7,8 +7,8 @@ class StewardNotifier
   def notify
     email_stewards = @stewards.select { |s| s.include?('@') }
     github_stewards = @stewards - email_stewards
-    notify_github(github_stewards, email_stewards)
     notify_emails(email_stewards)
+    notify_github(github_stewards, email_stewards)
   end
 
   private
@@ -21,7 +21,7 @@ class StewardNotifier
     message = <<-STRING
 Hey, sweet pull request you got here!
 
-Here are some stewards who might want a look: #{usernames.join(' ')}. These emails were also notified #{emails.join(' ')}.
+Here are some stewards who might want a look: #{usernames.join(' ')}. These emails were also notified: #{emails.join(' ')}.
 
 Keep being awesome.
 STRING
@@ -30,6 +30,8 @@ STRING
   end
 
   def notify_emails(email_stewards)
-    # sendgrid goes here?
+    email_stewards.each do |email|
+      UserMailer.notify(email, @handler.html_url).deliver_now
+    end
   end
 end
