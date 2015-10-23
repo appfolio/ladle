@@ -21,8 +21,4 @@ class PullRequestsController < ApplicationController
   def set_pull_request
     @pull_request = PullRequest.find(params[:id])
   end
-
-  def pull_request_params
-    params[:pull_request]
-  end
 end

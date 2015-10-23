@@ -12,8 +12,20 @@ class PullHandlerTest < ActiveSupport::TestCase
   end
 
   test 'gets the stewards and posts a comment' do
+    mock_notifier = mock
+    mock_notifier.expects(:notify)
+    StewardNotifier.expects(:new)
+      .with(['xanderstrike', 'fadsfadsfadsfadsf', 'alexander.standke@appfolio.com', 'xanderstrike@gmail.com'], anything)
+      .returns(mock_notifier)
+
     using_vcr do
-      PullHandler.new(repo: 'xanderstrike/test', number: 1, html_url: 'www.test.com').handle
+      PullHandler.new(repo: 'XanderStrike/test', number: 30, html_url: 'www.test.com').handle
+    end
+  end
+
+  test 'does nothing when there are not stewards' do
+    using_vcr do
+      PullHandler.new(repo: 'XanderStrike/test', number: 1, html_url: 'www.test.com').handle
     end
   end
 
@@ -25,9 +37,15 @@ class PullHandlerTest < ActiveSupport::TestCase
   end
 
   test 'creates a pull request object if it does not already exist' do
+    mock_notifier = mock
+    mock_notifier.expects(:notify)
+    StewardNotifier.expects(:new)
+      .with(['xanderstrike', 'fadsfadsfadsfadsf', 'alexander.standke@appfolio.com', 'xanderstrike@gmail.com'], anything)
+      .returns(mock_notifier)
+
     using_vcr do
       assert_difference('PullRequest.count', 1) do
-        PullHandler.new(repo: 'xanderstrike/test', number: 1, html_url: 'www.test.com').handle
+        PullHandler.new(repo: 'xanderstrike/test', number: 30, html_url: 'www.test.com').handle
       end
     end
   end

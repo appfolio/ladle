@@ -1,4 +1,8 @@
 ENV['RAILS_ENV'] ||= 'test'
+require 'simplecov'
+SimpleCov.start 'rails'
+SimpleCov.minimum_coverage 100
+
 require File.expand_path('../../config/environment', __FILE__)
 require 'rails/test_help'
 require 'vcr'
@@ -15,7 +19,7 @@ VCR.configure do |c|
   c.cassette_library_dir = 'test/vcr_cassettes'
   c.hook_into :webmock
   c.filter_sensitive_data('<TOKEN>') do
-    YAML.load(File.open("#{Rails.root}/config/github.yml"))['access_token']
+    ENV['GH_ACCESS_TOKEN']
   end
 end
 
