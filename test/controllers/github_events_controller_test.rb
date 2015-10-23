@@ -25,12 +25,12 @@ class GithubEventsControllerTest < ActionController::TestCase
   test 'handles the pull when opened' do
     handler_mock = PullHandler.new(repo: 'a', number: 1, html_url: 'www.test.com')
     handler_mock.expects(:handle)
-    PullHandler.expects(:new).with(repo: 'test/test', number: 5, html_url: nil).returns(handler_mock)
+    PullHandler.expects(:new).with(repo: 'test/test', number: 5, html_url: 'www.test.com').returns(handler_mock)
 
     payload = {}.to_json
     signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), Rails.application.github_secret_token, payload)
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
-    post :payload, payload, format: :json, number: 5, pull_request: { state: 'open' }, repository: { full_name: 'test/test' }
+    post :payload, payload, format: :json, number: 5, pull_request: { state: 'open', html_url: 'www.test.com' }, repository: { full_name: 'test/test' }
 
     assert_response :success
   end
