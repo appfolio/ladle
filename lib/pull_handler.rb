@@ -1,4 +1,8 @@
+require 'steward_notifier'
+
 class PullHandler
+  attr_reader :repo, :number
+
   def initialize(repo:, number:, html_url:)
     @repo = repo
     @number = number
@@ -36,19 +40,13 @@ class PullHandler
       end
     end
 
-    stewards = stewards.uniq.map { |s| "@#{s}" }
+
+
+#     stewards = stewards.uniq.map { |s| "@#{s}" }
 
     if stewards.size > 0
-      message = <<-STRING
-Hey, sweet pull request you got here!
-
-Here are some stewards who might want a look: #{stewards.join(' ')}
-
-Keep being awesome.
-STRING
-
-      Rails.logger.info("Found #{stewards.size} stewards. Posting comment.")
-      client.add_comment(@repo, @number, message)
+      Rails.logger.info("Found #{stewards.size} stewards. Notifying.")
+      StewardNotifier.new(stewards, self).notify
       @pr.update_attributes(handled: true)
     else
       Rails.logger.info('No stewards found. Doing nothing.')
