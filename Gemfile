@@ -34,6 +34,8 @@ gem 'devise'
 gem 'devise-bootstrap-views'
 gem 'omniauth-github'
 
+gem 'octokit', '~> 4.1'
+
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
