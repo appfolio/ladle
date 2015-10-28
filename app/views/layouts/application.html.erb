@@ -7,13 +7,22 @@
   <%= csrf_meta_tags %>
 </head>
 <body>
+
 <div class="container">
+
   <% if notice %>
     <div class="alert alert-success" role="alert"><%= notice %></div>
   <% end %>
   <% if alert %>
     <div class="alert alert-warning" role="alert"><%= alert %></div>
   <% end %>
+
+  <% if user_signed_in? %>
+    Logged in as <strong><%= current_user.email %></strong>.
+    <%= link_to "Logout", destroy_user_session_path, method: :delete, :class => 'navbar-link'  %>
+  <% end %>
+
+  <br/>
 
   <%= yield %>
 </div>
