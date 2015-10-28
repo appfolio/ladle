@@ -25,26 +25,18 @@ module Ladle
     # Do not swallow errors in after_commit/after_rollback callbacks.
     config.active_record.raise_in_transactional_callbacks = true
 
-    class GithubApplicationCredentials
-      attr_reader :application_id, :application_secret
-
-      def initialize(application_id, application_secret)
-        @application_id = application_id
-        @application_secret = application_secret
-      end
-    end
-
-    def github_application_credentials
-      @github_application_credentials ||= begin
-        config_file = Pathname.new("#{paths["config"].existent.first}/github_application.yml")
+    def github_config
+      @github_config ||= begin
+        config_file = Pathname.new("#{paths["config"].existent.first}/github.yml")
 
         if config_file.exist?
-          values = YAML.load_file(config_file)
-          GithubApplicationCredentials.new(values["application_id"], values["application_secret"])
+          GithubConfig.from_file(config_file)
         else
-          GithubApplicationCredentials.new("Hello", "World")
+          GithubConfig.new(application_id: "Hello", application_secret: "Kitty")
         end
       end
     end
   end
 end
+
+require 'github_config'

@@ -17,4 +17,4 @@
 !/log/.keep
 /tmp
 
-/config/github_application.yml
+/config/github.yml
