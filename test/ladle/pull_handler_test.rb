@@ -11,18 +11,6 @@ class PullHandlerTest < ActiveSupport::TestCase
     assert_equal 'www.test.com', ph.instance_variable_get('@html_url')
   end
 
-  test 'gets the stewards and posts a comment' do
-    mock_notifier = mock
-    mock_notifier.expects(:notify)
-    StewardNotifier.expects(:new)
-      .with(['xanderstrike', 'fadsfadsfadsfadsf', 'alexander.standke@appfolio.com', 'xanderstrike@gmail.com'], anything)
-      .returns(mock_notifier)
-
-    using_vcr do
-      PullHandler.new(repo: 'XanderStrike/test', number: 30, html_url: 'www.test.com').handle
-    end
-  end
-
   test 'does nothing when there are not stewards' do
     using_vcr do
       PullHandler.new(repo: 'XanderStrike/test', number: 1, html_url: 'www.test.com').handle
@@ -40,7 +28,10 @@ class PullHandlerTest < ActiveSupport::TestCase
     mock_notifier = mock
     mock_notifier.expects(:notify)
     StewardNotifier.expects(:new)
-      .with(['xanderstrike', 'fadsfadsfadsfadsf', 'alexander.standke@appfolio.com', 'xanderstrike@gmail.com'], anything)
+      .with({'xanderstrike' => ['/stewards.yml'],
+             'fadsfadsfadsfadsf' => ['/stewards.yml'],
+             'alexander.standke@appfolio.com' => ['/stewards.yml'],
+             'xanderstrike@gmail.com' => ['/stewards.yml']}, 'www.test.com')
       .returns(mock_notifier)
 
     using_vcr do

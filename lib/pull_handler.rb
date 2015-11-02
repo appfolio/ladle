@@ -27,29 +27,33 @@ class PullHandler
 
     directories = directories.uniq
 
-    stewards = []
+    stewards_map = {}
     directories.each do |directory|
       stewards_file_path = File.join('/', directory, 'stewards.yml')
       begin
         contents = client.contents(@repo, path: stewards_file_path, ref: head_sha)[:content]
         contents = YAML.load(Base64.decode64(contents))
-        stewards += contents['stewards']
+
+        contents['stewards'].each do |github_username|
+          stewards_map[github_username] ||= []
+          stewards_map[github_username] << stewards_file_path
+        end
       rescue Octokit::NotFound
         next
       end
     end
 
-    if stewards.size > 0
-      Rails.logger.info("Found #{stewards.size} stewards. Notifying.")
-      StewardNotifier.new(stewards, self).notify
-      @pr.update_attributes(handled: true)
-    else
+    if stewards_map.empty?
       Rails.logger.info('No stewards found. Doing nothing.')
+    else
+      Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
+      StewardNotifier.new(stewards_map, @html_url).notify
+      @pr.update_attributes!(handled: true)
     end
   end
 
   def already_handled?
     @pr = PullRequest.find_or_create_by(repo: @repo, number: @number, html_url: @html_url)
-    @pr.handled
+    @pr.handled?
   end
 end
