@@ -18,3 +18,5 @@
 /tmp
 
 /config/github.yml
+/config/gmail.yml
+coverage

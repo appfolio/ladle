@@ -11,10 +11,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151028181523) do
+ActiveRecord::Schema.define(version: 20151102203932) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "pull_requests", force: :cascade do |t|
+    t.string   "repo",                       null: false
+    t.integer  "number",                     null: false
+    t.string   "html_url"
+    t.boolean  "handled",    default: false, null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+  end
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
@@ -32,9 +41,11 @@ ActiveRecord::Schema.define(version: 20151028181523) do
     t.string   "provider"
     t.string   "uid"
     t.string   "token"
+    t.string   "github_username"
   end
 
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
+  add_index "users", ["github_username"], name: "index_users_on_github_username", unique: true, using: :btree
   add_index "users", ["provider"], name: "index_users_on_provider", using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
   add_index "users", ["uid"], name: "index_users_on_uid", using: :btree

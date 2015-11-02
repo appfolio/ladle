@@ -1,3 +1,5 @@
+require 'pull_handler'
+
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
@@ -6,16 +8,27 @@ class GithubEventsController < ApplicationController
 
   def payload
     request.body.rewind
-    payload_body = request.body.read
 
+    payload_body = request.body.read
     verify_signature(payload_body)
 
-    event = JSON.parse(payload_body)
-    Rails.logger.info("I got some JSON: #{event.inspect}")
+    pull_request = params.require(:pull_request)
+    repository   = params.require(:repository)
+
+    if pull_request[:state] == 'open'
+      repo = repository[:full_name]
+      number = params.require(:number)
+      Rails.logger.info "New pull ##{number} for #{repo}. Running handler..."
+      PullHandler.new(repo: repo,
+                      number: number,
+                      html_url: pull_request[:html_url]).handle
+    else
+      Rails.logger.info 'Pull closed, doing nothing.'
+    end
 
     render status: :ok, nothing: true
   rescue SignatureMismatch => e
-    Rails.logger.info("#{e} - #{e.message}")
+    Rails.logger.info "#{e} - #{e.message}"
     render status: :forbidden, nothing: true
   end
 

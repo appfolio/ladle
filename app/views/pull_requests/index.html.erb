@@ -1,0 +1,9 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Listing Pull Requests</h1>
+
+<%= render 'table', pull_requests: @pull_requests %>
+
+<br>
+
+<%= link_to 'New Pull request', new_pull_request_path %>
