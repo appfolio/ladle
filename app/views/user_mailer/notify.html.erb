@@ -8,6 +8,12 @@
     <p>
       Check it, yo: <%= link_to @url, @url %>
     </p>
+
+    <p>You were notified from these files:</p>
+    <% @stewards_files.each do |file| %>
+    <p><%= file %></p>
+    <% end %>
+
     <small>Sent at <%= Time.now.to_s %>. Don't reply to this email. That would be silly.</small>
   </body>
 </html>

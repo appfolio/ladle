@@ -1,33 +1,32 @@
 require 'test_helper'
-require 'pull_handler'
 require 'steward_notifier'
 
 class StewardNotifierTest < ActionController::TestCase
   include VCRHelpers
 
   setup do
-    @pull_handler = PullHandler.new(number: 11, repo: 'XanderStrike/test', html_url: 'https://github.com/XanderStrike/test/pull/11')
-    @stewards     = ['xanderstrike', 'boop']
+    @stewards = {
+      'xanderstrike' => ['/stewards.yml', '/test/stewards.yml'],
+      'boop'         => ['/stewards.yml']
+    }
+    @notifier = StewardNotifier.new(@stewards, 'https://github.com/XanderStrike/test/pull/11')
   end
 
   test 'assigns the stewards and the handler' do
-    sn = StewardNotifier.new(@stewards, @pull_handler)
-    assert_equal @stewards, sn.instance_variable_get('@stewards')
-    assert_equal @pull_handler, sn.instance_variable_get('@handler')
+    assert_equal @stewards, @notifier.instance_variable_get(:@stewards_map)
+    assert_equal 'https://github.com/XanderStrike/test/pull/11', @notifier.instance_variable_get(:@pull_request_url)
   end
 
   test 'notify should send emails to users' do
     User.create!(email: 'xander@strike.com', password: 'blehbleh', provider: "bleh", uid: "123", token: 'a', github_username: 'xanderstrike')
-    sn = StewardNotifier.new(@stewards, @pull_handler)
-
-    sn.expects(:send_email).with('xander@strike.com')
-    sn.notify
+    @notifier.expects(:send_email).with('xander@strike.com', ['/stewards.yml', '/test/stewards.yml'])
+    @notifier.notify
   end
 
   test 'send_email uses UserMailer' do
-    sn = StewardNotifier.new(@stewards, @pull_handler)
-    sn.send(:send_email, "hello@kitty.com")
+    ActionMailer::Base.deliveries.clear
 
+    @notifier.send(:send_email, "hello@kitty.com", ['/stewards.yml', '/test/stewards.yml'])
 
     notify_email = ActionMailer::Base.deliveries.last
 
