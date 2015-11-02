@@ -1,0 +1,18 @@
+default: &default
+  restrict_access_to_organizations: 'whatever'
+  github_application:
+    application_id: '897234897089471230'
+    application_secret: '897234897089471230'
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  restrict_access_to_organizations: <%= ENV['ALLOWED_ORGANIZATIONS'] %>
+
+  github_application:
+    application_id: <%= ENV['GH_APPLICATION_ID'] %>
+    application_secret: <%= ENV['GH_APPLICATION_SECRET'] %>
