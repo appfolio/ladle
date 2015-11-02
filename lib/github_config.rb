@@ -7,11 +7,10 @@ class GithubConfig
     @restrict_access_to_organizations = restrict_access_to_organizations
   end
 
-  def self.from_file(config_file)
-    values = YAML.load_file(config_file)
-    new(application_id:                   values["github_application"]["application_id"],
-        application_secret:               values["github_application"]["application_secret"],
-        restrict_access_to_organizations: values["restrict_access_to_organizations"])
+  def self.from_values(config_hash)
+    new(application_id:                   config_hash["github_application"]["application_id"],
+        application_secret:               config_hash["github_application"]["application_secret"],
+        restrict_access_to_organizations: config_hash["restrict_access_to_organizations"].split(','))
   end
 
   def organization_permitted?(organizations)

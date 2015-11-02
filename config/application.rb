@@ -26,15 +26,7 @@ module Ladle
     config.active_record.raise_in_transactional_callbacks = true
 
     def github_config
-      @github_config ||= begin
-        config_file = Pathname.new("#{paths["config"].existent.first}/github.yml")
-
-        if config_file.exist?
-          GithubConfig.from_file(config_file)
-        else
-          GithubConfig.new(application_id: "Hello", application_secret: "Kitty")
-        end
-      end
+      @github_config ||= GithubConfig.from_values(config_for(:github))
     end
   end
 end
