@@ -7,7 +7,7 @@ class StewardNotifierTest < ActionController::TestCase
 
   setup do
     @pull_handler = PullHandler.new(number: 11, repo: 'XanderStrike/test', html_url: 'https://github.com/XanderStrike/test/pull/11')
-    @stewards = ['xanderstrike', 'xanderstrike@gmail.com', 'boop', 'test@test.com']
+    @stewards     = ['xanderstrike', 'boop']
   end
 
   test 'assigns the stewards and the handler' do
@@ -16,20 +16,22 @@ class StewardNotifierTest < ActionController::TestCase
     assert_equal @pull_handler, sn.instance_variable_get('@handler')
   end
 
-  test 'comments on github' do
-    using_vcr do
-      sn = StewardNotifier.new(%w(xanderstrike kimboslice), @pull_handler)
-      sn.stubs(:notify_emails)
-      sn.notify
-    end
+  test 'notify should send emails to users' do
+    User.create!(email: 'xander@strike.com', password: 'blehbleh', provider: "bleh", uid: "123", token: 'a', github_username: 'xanderstrike')
+    sn = StewardNotifier.new(@stewards, @pull_handler)
+
+    sn.expects(:send_email).with('xander@strike.com')
+    sn.notify
   end
 
-  test 'sends emails' do
-    mailer = UserMailer.notify('test@test.com', 'test.com')
+  test 'send_email uses UserMailer' do
     sn = StewardNotifier.new(@stewards, @pull_handler)
-    sn.stubs(:notify_github)
-    UserMailer.expects(:notify).twice.returns(mailer)
+    sn.send(:send_email, "hello@kitty.com")
 
-    sn.notify
+
+    notify_email = ActionMailer::Base.deliveries.last
+
+    assert_equal "Ladle: New PR", notify_email.subject
+    assert_equal 'hello@kitty.com', notify_email.to[0]
   end
 end
