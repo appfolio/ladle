@@ -8,6 +8,7 @@ class User < ActiveRecord::Base
     user = where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.provider = auth.provider
       user.uid = auth.uid
+      user.github_username = auth.info.nickname
       user.email = auth.info.email
       user.token = auth.credentials.token
       user.password = Devise.friendly_token[0,20]
