@@ -2,11 +2,12 @@ require 'test_helper'
 
 class GithubEventsControllerTest < ActionController::TestCase
   test 'should get payload' do
+    repository = Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_token: 'hey')
+
     PullHandler.any_instance.stubs(:handle)
-    data = {payload: {hello: 'world'}}
 
     payload = {}.to_json
-    signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), Rails.application.github_secret_token, payload)
+    signature = repository.compute_webhook_signature(payload)
 
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
 
@@ -15,48 +16,63 @@ class GithubEventsControllerTest < ActionController::TestCase
   end
 
   test 'invalid signature' do
+    Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_token: 'hey')
+
     payload = {}.to_json
     request.headers['HTTP_X_HUB_SIGNATURE'] = 'stuff!'
-    post :payload, payload, format: :json
+    post :payload, payload, format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: 'test/test' }
+
+    assert_response :forbidden
+  end
+
+  test 'repository does not exist' do
+    post :payload, {}.to_json, format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: 'test/test' }
 
     assert_response :forbidden
   end
 
   test 'handles the pull when opened' do
-    handler_mock = PullHandler.new(repo: 'a', number: 1, html_url: 'www.test.com')
-    handler_mock.expects(:handle)
-    PullHandler.expects(:new).with(repo: 'test/test', number: 5, html_url: 'www.test.com').returns(handler_mock)
+    repository = Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_token: 'hey')
 
-    payload = {}.to_json
-    signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), Rails.application.github_secret_token, payload)
-    request.headers['HTTP_X_HUB_SIGNATURE'] = signature
-    post :payload, payload, format: :json, number: 5, pull_request: { state: 'open', html_url: 'www.test.com' }, repository: { full_name: 'test/test' }
+    handler_mock = mock
+    handler_mock.expects(:handle)
+    PullHandler.expects(:new).with(repository: repository, number: 5, html_url: 'www.test.com').returns(handler_mock)
+
+    @controller.expects(:verify_signature)
+    post :payload, {}.to_json, format: :json, number: 5, pull_request: { state: 'open', html_url: 'www.test.com' }, repository: { full_name: 'test/test' }
 
     assert_response :success
   end
 
   test 'does nothing when pull closed' do
+    repository = Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_token: 'hey')
     PullHandler.expects(:new).never
 
     payload = {}.to_json
-    signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), Rails.application.github_secret_token, payload)
+    signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), repository.webhook_secret, payload)
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
     post :payload, payload, format: :json, number: 5, pull_request: { state: 'closed' }, repository: { full_name: 'test/test' }
 
     assert_response :success
   end
 
-  test 'raises invalid request' do
-    payload = {}.to_json
-    signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), Rails.application.github_secret_token, payload)
-    request.headers['HTTP_X_HUB_SIGNATURE'] = signature
-
-    assert_raises(ActionController::ParameterMissing) do
-      post :payload, payload, format: :json, number: 5, pull_request: { }, repository: { full_name: 'test/test' }
+  test 'required parameters repository' do
+    raised = assert_raises(ActionController::ParameterMissing) do
+      post :payload, {}.to_json, format: :json, number: 5, pull_request: { }
     end
 
-    assert_raises(ActionController::ParameterMissing) do
-      post :payload, payload, format: :json, number: 5, pull_request: { state: 'open' }, repository: { }
+    assert_equal :repository, raised.param
+  end
+
+  test 'required parameters pull_request' do
+    Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_token: 'hey')
+
+    @controller.expects(:verify_signature)
+
+    raised = assert_raises(ActionController::ParameterMissing) do
+      post :payload, {}.to_json, format: :json, number: 5, repository: { full_name: 'test/test' }
     end
+
+    assert_equal :pull_request, raised.param
   end
 end

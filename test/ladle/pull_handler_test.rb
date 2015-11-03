@@ -4,16 +4,20 @@ require 'pull_handler'
 class PullHandlerTest < ActiveSupport::TestCase
   include VCRHelpers
 
+  setup do
+    @repository = Repository.create!(name: 'xanderstrike/test', webhook_secret: 'whatever', access_token: 'hey')
+  end
+
   test 'stores the repo and number' do
-    ph = PullHandler.new(repo: 'a', number: 1, html_url: 'www.test.com')
-    assert_equal 'a', ph.instance_variable_get('@repo')
+    ph = PullHandler.new(repository: @repository, number: 1, html_url: 'www.test.com')
+    assert_equal @repository, ph.instance_variable_get('@repository')
     assert_equal 1, ph.instance_variable_get('@number')
     assert_equal 'www.test.com', ph.instance_variable_get('@html_url')
   end
 
   test 'does nothing when there are not stewards' do
     using_vcr do
-      PullHandler.new(repo: 'XanderStrike/test', number: 1, html_url: 'www.test.com').handle
+      PullHandler.new(repository: @repository, number: 1, html_url: 'www.test.com').handle
     end
   end
 
@@ -21,7 +25,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     PullRequest.create!(repo: 'xanderstrike/test', number: 1, html_url: 'www.test.com', handled: true)
 
     Rails.logger.expects(:info).with('Pull already handled, skipping.')
-    PullHandler.new(repo: 'xanderstrike/test', number: 1, html_url: 'www.test.com').handle
+    PullHandler.new(repository: @repository, number: 1, html_url: 'www.test.com').handle
   end
 
   test 'creates a pull request object if it does not already exist' do
@@ -36,7 +40,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     using_vcr do
       assert_difference('PullRequest.count', 1) do
-        PullHandler.new(repo: 'xanderstrike/test', number: 30, html_url: 'www.test.com').handle
+        PullHandler.new(repository: @repository, number: 30, html_url: 'www.test.com').handle
       end
     end
   end
