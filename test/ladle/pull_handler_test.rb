@@ -5,7 +5,8 @@ class PullHandlerTest < ActiveSupport::TestCase
   include VCRHelpers
 
   setup do
-    @repository = Repository.create!(name: 'xanderstrike/test', webhook_secret: 'whatever', access_token: 'hey')
+    user = User.create!(email: 'test@test.com', password: 'hunter234')
+    @repository = Repository.create!(name: 'xanderstrike/test', webhook_secret: 'whatever', access_via: user)
   end
 
   test 'stores the repo and number' do

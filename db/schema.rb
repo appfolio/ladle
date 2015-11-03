@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151102234939) do
+ActiveRecord::Schema.define(version: 20151103195346) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -28,9 +28,9 @@ ActiveRecord::Schema.define(version: 20151102234939) do
   create_table "repositories", force: :cascade do |t|
     t.string   "name",           null: false
     t.string   "webhook_secret", null: false
-    t.string   "access_token",   null: false
     t.datetime "created_at",     null: false
     t.datetime "updated_at",     null: false
+    t.integer  "access_via_id",  null: false
   end
 
   add_index "repositories", ["name"], name: "index_repositories_on_name", unique: true, using: :btree
@@ -60,4 +60,5 @@ ActiveRecord::Schema.define(version: 20151102234939) do
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
   add_index "users", ["uid"], name: "index_users_on_uid", using: :btree
 
+  add_foreign_key "repositories", "users", column: "access_via_id"
 end
