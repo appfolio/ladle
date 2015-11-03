@@ -18,9 +18,6 @@ end
 VCR.configure do |c|
   c.cassette_library_dir = 'test/vcr_cassettes'
   c.hook_into :webmock
-  c.filter_sensitive_data('<TOKEN>') do
-    ENV['GH_ACCESS_TOKEN']
-  end
 end
 
 module VCRHelpers

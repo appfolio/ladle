@@ -2,7 +2,7 @@
 http_interactions:
 - request:
     method: get
-    uri: https://api.github.com/repos/XanderStrike/test/pulls/1
+    uri: https://api.github.com/repos/xanderstrike/test/pulls/1
     body:
       encoding: US-ASCII
       string: ''
@@ -77,7 +77,7 @@ http_interactions:
   recorded_at: Fri, 23 Oct 2015 21:33:34 GMT
 - request:
     method: get
-    uri: https://api.github.com/repos/XanderStrike/test/pulls/1/files
+    uri: https://api.github.com/repos/xanderstrike/test/pulls/1/files
     body:
       encoding: US-ASCII
       string: ''
@@ -150,7 +150,7 @@ http_interactions:
   recorded_at: Fri, 23 Oct 2015 21:33:35 GMT
 - request:
     method: get
-    uri: https://api.github.com/repos/XanderStrike/test/contents/test4/stewards.yml?ref=e69723d2da9b6a56aaed93a1d4cf1e633ad7de1e
+    uri: https://api.github.com/repos/xanderstrike/test/contents/test4/stewards.yml?ref=e69723d2da9b6a56aaed93a1d4cf1e633ad7de1e
     body:
       encoding: US-ASCII
       string: ''

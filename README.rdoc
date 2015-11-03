@@ -2,9 +2,6 @@
 
 Environment variables required:
 
-SECRET_TOKEN
-GH_ACCESS_TOKEN
-
 SENDGRID_USERNAME
 SENDGRID_PASSWORD
 

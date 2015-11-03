@@ -1,10 +1,10 @@
 require 'steward_notifier'
 
 class PullHandler
-  attr_reader :repo, :number, :html_url
+  attr_reader :repository, :number, :html_url
 
-  def initialize(repo:, number:, html_url:)
-    @repo = repo
+  def initialize(repository:, number:, html_url:)
+    @repository = repository
     @number = number
     @html_url = html_url
   end
@@ -12,12 +12,12 @@ class PullHandler
   def handle
     return Rails.logger.info('Pull already handled, skipping.') if already_handled?
 
-    client = Octokit::Client.new(access_token: Rails.application.github_access_token)
+    client = Octokit::Client.new(access_token: @repository.access_token)
 
-    pr = client.pull_request(@repo, @number)
+    pr = client.pull_request(@repository.name, @number)
     head_sha = pr[:head][:sha]
 
-    filenames = client.pull_request_files(@repo, @number).map do |file|
+    filenames = client.pull_request_files(@repository.name, @number).map do |file|
       file[:filename]
     end
 
@@ -31,7 +31,7 @@ class PullHandler
     directories.each do |directory|
       stewards_file_path = File.join('/', directory, 'stewards.yml')
       begin
-        contents = client.contents(@repo, path: stewards_file_path, ref: head_sha)[:content]
+        contents = client.contents(@repository.name, path: stewards_file_path, ref: head_sha)[:content]
         contents = YAML.load(Base64.decode64(contents))
 
         contents['stewards'].each do |github_username|
@@ -53,7 +53,7 @@ class PullHandler
   end
 
   def already_handled?
-    @pr = PullRequest.find_or_create_by(repo: @repo, number: @number, html_url: @html_url)
+    @pr = PullRequest.find_or_create_by(repo: @repository.name, number: @number, html_url: @html_url)
     @pr.handled?
   end
 end
