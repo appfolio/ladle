@@ -1,4 +1,4 @@
-class PullRequestsController < ApplicationController
+class PullRequestsController < AuthenticatedController
   before_action :set_pull_request, only: [:show, :edit, :update, :destroy]
 
   def index

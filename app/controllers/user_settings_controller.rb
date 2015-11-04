@@ -1,4 +1,4 @@
-class UserSettingsController < ApplicationController
+class UserSettingsController < AuthenticatedController
   def show
   end
 
