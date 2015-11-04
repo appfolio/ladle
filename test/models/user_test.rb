@@ -2,6 +2,38 @@ require 'test_helper'
 
 class UserTest < ActiveSupport::TestCase
 
+  test "devise validations" do
+    # test presence
+    user = User.new
+    refute_predicate user, :valid?
+
+    assert_equal [:email, :password], user.errors.keys
+
+    user.errors.each do |attribute, messages|
+      assert_equal "can't be blank", messages, attribute
+    end
+
+    user.email = 'hey@ho.com'
+    user.password = '12345678'
+    assert_predicate user, :valid?
+
+    user.save!
+
+    # test format
+    user.email = 'barf'
+    refute_predicate user, :valid?
+
+    assert_equal [:email], user.errors.keys
+    assert_equal ["is invalid"], user.errors[:email]
+
+    # test uniqueness
+    user = User.create(email: 'hey@ho.com', password: '12345678')
+    refute_predicate user, :valid?
+
+    assert_equal [:email], user.errors.keys
+    assert_equal ["has already been taken"], user.errors[:email]
+  end
+
   test "from_omniauth creates user" do
     auth = stub(provider: 'github',
                 uid: '9213874908137481237',
