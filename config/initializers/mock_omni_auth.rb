@@ -15,35 +15,8 @@ if Rails.env.development? && ! ENV['MOCK_OMNIAUTH'].nil?
     }
   )
 
-  require 'webmock'
+  require 'github_stubs'
 
-  module StubUser
-    extend WebMock::API
-
-    def self.stub_login(token)
-      response = [
-        {
-          "login": "nil-inc",
-        }
-      ]
-
-      stub_request(:get, "https://api.github.com/user/orgs")
-        .with(
-          headers: {
-            "Authorization" => "token #{token}"
-          }
-        )
-        .to_return(
-          body:    response.to_json,
-          status:  200,
-          headers: {
-            "Content-Type"        => "application/json; charset=utf-8",
-            "Vary"                => "Accept, Authorization, Cookie, X-GitHub-OTP, Accept-Encoding",
-            "X-GitHub-Media-Type" => "github.v3"
-          }
-        )
-    end
-  end
-
-  StubUser.stub_login(token)
+  GithubStubs.stub_login(token)
+  GithubStubs.stub_emails(token)
 end

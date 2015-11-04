@@ -8,7 +8,9 @@ require 'rails/test_help'
 require 'vcr'
 require 'mocha/mini_test'
 
-class MiniTest::Unit::TestCase
+require 'github_stubs'
+
+class MiniTest::Test
   include FactoryGirl::Syntax::Methods
 end
 

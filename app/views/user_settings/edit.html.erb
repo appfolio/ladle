@@ -1,2 +1,12 @@
-<h1>UserSettings#edit</h1>
-<p>Find me in app/views/user_settings/edit.html.erb</p>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4>Settings</h4>
+  </div>
+  <div class="panel-body">
+    <%= simple_form_for(@view.user, url: user_settings_path, method: :patch) do |f| %>
+      <%= f.input :email, collection: @view.emails, include_blank: false, label: 'Notification Email' %>
+      <%= f.button :submit, value: "Update settings", class: 'btn-success' %>
+    <% end %>
+  </div>
+</div>
+

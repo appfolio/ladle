@@ -24,7 +24,7 @@
           <% if current_user %>
             <li><%= link_to('Pulls', pull_requests_path) %></li>
             <li><%= link_to('Home', root_path) %></li>
-            <li><%= link_to('Settings', user_settings_path ) %></li>
+            <li><%= link_to('Settings', edit_user_settings_path ) %></li>
             <li><%= link_to('Logout', destroy_user_session_path, :method => :delete) %></li>
           <% end %>
         </ul>
@@ -36,7 +36,7 @@
     <div class="alert alert-success" role="alert"><%= notice %></div>
   <% end %>
   <% if alert %>
-    <div class="alert alert-warning" role="alert"><%= alert %></div>
+    <div class="alert alert-danger" role="alert"><%= alert %></div>
   <% end %>
 
   <%= yield %>
