@@ -37,6 +37,7 @@ gem 'omniauth-github'
 gem 'octokit', '~> 4.1'
 
 gem 'simple_form', '~> 3.2'
+gem 'factory_girl_rails', '~> 4.0'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
