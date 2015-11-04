@@ -23,7 +23,8 @@
         <ul class="nav navbar-nav navbar-right">
           <% if current_user %>
             <li><%= link_to('Pulls', pull_requests_path) %></li>
-            <li><%= link_to('Home', '/') %></li>
+            <li><%= link_to('Home', root_path) %></li>
+            <li><%= link_to('Settings', user_settings_path ) %></li>
             <li><%= link_to('Logout', destroy_user_session_path, :method => :delete) %></li>
           <% end %>
         </ul>
