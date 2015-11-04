@@ -1,5 +1,5 @@
 default: &default
-  restrict_access_to_organizations: 'whatever'
+  restrict_access_to_organizations: 'nil-inc'
   github_application:
     application_id: '897234897089471230'
     application_secret: '897234897089471230'
