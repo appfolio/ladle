@@ -1,3 +1,23 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [[Ladle](https://af-ladle.herokuapp.com/)](#ladlehttpsaf-ladleherokuappcom)
+  - [Mission](#mission)
+  - [Architecture](#architecture)
+    - [Authentication](#authentication)
+    - [Observing Repositories](#observing-repositories)
+  - [Deployment](#deployment)
+    - [Heroku](#heroku)
+    - [GitHub Application](#github-application)
+    - [Email Notifications](#email-notifications)
+    - [Restricted Access](#restricted-access)
+    - [Appfolio Specific Instances](#appfolio-specific-instances)
+      - [Production](#production)
+      - [Staging](#staging)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # [Ladle](https://af-ladle.herokuapp.com/)
 
 Serving stew to stewards.
