@@ -8,7 +8,7 @@ class RepositoryTest < ActiveSupport::TestCase
   end
   
   test 'access_token delegated to user' do
-    user = User.create!(email: 'test@test.com', password: 'hunter234', token: 'hello')
+    user = create(:user, token: 'hello')
     repo = Repository.create!(name: 'bleh/bleh', webhook_secret: 'asdf', access_via: user)
     assert_equal 'hello', repo.access_token
   end
