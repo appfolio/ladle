@@ -1,10 +1,20 @@
-# New PR in your area of interest.
+<% if @pull_request[:description] %>
+<%= @pull_request[:description] %>
 
-Check it, yo: <%= @url %>
-
-You were notified from these files:
-<% @stewards_files.each do |file| %>
-  <%= file %>
+---------------------------------------------
 <% end %>
+
+You can view, comment on, or merge this pull request online at:
+
+  <%= @pull_request[:url] %>
+
+You were notified of this pull request because you are registered as a steward in these files:
+
+<% @stewards_files.each do |file| %>
+  * <%= file %>
+<% end %>
+
+---------------------------------------------
+You received this email from Ladle for account <%= @user.github_username %>. Update your notification settings at <%= edit_user_settings_url %>.
 
 Sent at <%= Time.now.to_s %>. Don't reply to this email. That would be silly.

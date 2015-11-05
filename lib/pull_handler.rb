@@ -3,21 +3,25 @@ require 'steward_notifier'
 class PullHandler
   attr_reader :repository, :number, :html_url
 
-  def initialize(repository:, number:, html_url:)
-    @repository = repository
-    @number = number
-    @html_url = html_url
+  def initialize(repository:, pull_request_data:)
+    @repository        = repository
+    @pull_request_data = pull_request_data
+
+    @pull_request = PullRequest.find_or_create_by(
+      repo:     @repository.name,
+      number:   @pull_request_data[:number],
+      html_url: @pull_request_data[:url])
   end
 
   def handle
-    return Rails.logger.info('Pull already handled, skipping.') if already_handled?
+    return Rails.logger.info('Pull already handled, skipping.') if @pull_request.handled?
 
     client = Octokit::Client.new(access_token: @repository.access_token)
 
-    pr = client.pull_request(@repository.name, @number)
+    pr = client.pull_request(@repository.name, @pull_request.number)
     head_sha = pr[:head][:sha]
 
-    filenames = client.pull_request_files(@repository.name, @number).map do |file|
+    filenames = client.pull_request_files(@repository.name, @pull_request.number).map do |file|
       file[:filename]
     end
 
@@ -47,13 +51,8 @@ class PullHandler
       Rails.logger.info('No stewards found. Doing nothing.')
     else
       Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
-      StewardNotifier.new(stewards_map, @html_url).notify
-      @pr.update_attributes!(handled: true)
+      StewardNotifier.new(stewards_map, @repository.name, @pull_request_data).notify
+      @pull_request.update_attributes!(handled: true)
     end
-  end
-
-  def already_handled?
-    @pr = PullRequest.find_or_create_by(repo: @repository.name, number: @number, html_url: @html_url)
-    @pr.handled?
   end
 end
