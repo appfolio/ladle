@@ -1,6 +1,7 @@
 [![Circle CI](https://circleci.com/gh/appfolio/ladle.svg?style=svg)](https://circleci.com/gh/appfolio/ladle)
 [![Code Climate](https://codeclimate.com/github/appfolio/ladle/badges/gpa.svg)](https://codeclimate.com/github/appfolio/ladle)
 [![Coverage Status](https://coveralls.io/repos/appfolio/ladle/badge.svg?branch=master&service=github)](https://coveralls.io/github/appfolio/ladle?branch=master)
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/dc9336ede6bf47c688db97a5ff81c07c)](https://www.codacy.com/app/donnie-tognazzini/ladle)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
