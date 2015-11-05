@@ -61,7 +61,7 @@ group :test do
   gem 'mocha'
   gem 'webmock'
   gem 'vcr'
-  gem 'simplecov'
+  gem 'coveralls', require: false
 end
 
 
