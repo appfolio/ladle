@@ -80,7 +80,7 @@ class GithubEventsControllerTest < ActionController::TestCase
   private
 
   def create_repository
-    user = User.create!(email: 'test@test.com', password: 'hunter234')
+    user = create(:user)
     Repository.create!(name: 'test/test', webhook_secret: 'whatever', access_via: user)
   end
 end

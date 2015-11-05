@@ -11,6 +11,7 @@ FactoryGirl.define do
     email { generate(:dhh_email) }
     password "railsrules"
     token "1ea7ca751ea7ca751ea7ca751ea7ca75"
+    uid { generate(:dhh_github_username) }
     github_username { generate(:dhh_github_username) }
   end
 end

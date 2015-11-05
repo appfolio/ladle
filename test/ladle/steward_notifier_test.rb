@@ -18,7 +18,7 @@ class StewardNotifierTest < ActionController::TestCase
   end
 
   test 'notify should send emails to users' do
-    User.create!(email: 'xander@strike.com', password: 'blehbleh', provider: "bleh", uid: "123", token: 'a', github_username: 'xanderstrike')
+    create(:user, email: 'xander@strike.com', github_username: 'xanderstrike')
     @notifier.expects(:send_email).with('xander@strike.com', ['/stewards.yml', '/test/stewards.yml'])
     @notifier.notify
   end
