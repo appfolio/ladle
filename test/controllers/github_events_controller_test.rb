@@ -36,10 +36,10 @@ class GithubEventsControllerTest < ActionController::TestCase
 
     handler_mock = mock
     handler_mock.expects(:handle)
-    PullHandler.expects(:new).with(repository: repository, number: 5, html_url: 'www.test.com').returns(handler_mock)
+    PullHandler.expects(:new).with(repository: repository, pull_request_data: {number: 5, url: 'www.test.com', title: 'Hello Dude', description: "We did it!"}).returns(handler_mock)
 
     @controller.expects(:verify_signature)
-    post :payload, {}.to_json, format: :json, number: 5, pull_request: { state: 'open', html_url: 'www.test.com' }, repository: { full_name: repository.name }
+    post :payload, {}.to_json, format: :json, number: 5, pull_request: { state: 'open', html_url: 'www.test.com', title: 'Hello Dude', description: "We did it!" }, repository: { full_name: repository.name }
 
     assert_response :success
   end

@@ -12,9 +12,15 @@ class GithubEventsController < ApplicationController
     if pull_request[:state] == 'open'
       number = params.require(:number)
       Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
-      PullHandler.new(repository: @repository,
-                      number: number,
-                      html_url: pull_request[:html_url]).handle
+
+      pull_request_data = {
+        number:      number,
+        url:         pull_request[:html_url],
+        title:       pull_request[:title],
+        description: pull_request[:description],
+      }
+      PullHandler.new(repository:        @repository,
+                      pull_request_data: pull_request_data).handle
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end

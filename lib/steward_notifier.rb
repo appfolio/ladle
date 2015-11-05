@@ -1,7 +1,8 @@
 class StewardNotifier
-  def initialize(stewards_map, pull_request_url)
-    @stewards_map     = stewards_map
-    @pull_request_url = pull_request_url
+  def initialize(stewards_map, repository_name, pull_request)
+    @repository_name = repository_name
+    @pull_request    = pull_request
+    @stewards_map    = stewards_map
   end
 
   def notify
@@ -9,14 +10,14 @@ class StewardNotifier
       user = User.find_by_github_username(github_username)
 
       if user
-        send_email(user.email, stewards_files_paths)
+        send_email(user, stewards_files_paths)
       end
     end
   end
 
   private
 
-  def send_email(email, stewards_files)
-    UserMailer.notify(email: email, pull_request_url: @pull_request_url, stewards_files: stewards_files).deliver_now
+  def send_email(user, stewards_files)
+    UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, stewards_files: stewards_files).deliver_now
   end
 end
