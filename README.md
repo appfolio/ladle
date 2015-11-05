@@ -89,6 +89,7 @@ Ladle uses SendGrid for sending email notifications to stewards. The following E
 
   - `SENDGRID_USERNAME`
   - `SENDGRID_PASSWORD`
+  - `MAILER_HOST`
 
 ### Restricted Access
 
