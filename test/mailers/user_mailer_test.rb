@@ -9,7 +9,7 @@ class UserMailerTest < ActionMailer::TestCase
     assert_not ActionMailer::Base.deliveries.empty?
 
     # Test the body of the sent email contains what we expect it to
-    assert_equal ['xanderstrike@gmail.com'], email.from
+    assert_equal ['no-reply@appfolio.com'], email.from
     assert_equal ['some_dev@some_place.com'], email.to
     assert_equal 'Ladle: New PR', email.subject
   end

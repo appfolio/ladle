@@ -1,5 +1,5 @@
 class UserMailer < ApplicationMailer
-  default from: 'xanderstrike@gmail.com'
+  default from: 'Appfolio Ladle <no-reply@appfolio.com>'
 
   def notify(email:, pull_request_url:, stewards_files:)
     @url = pull_request_url
