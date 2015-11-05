@@ -2,7 +2,7 @@ require 'test_helper'
 
 class PullRequestsControllerTest < ActionController::TestCase
   setup do
-    @user = User.create!(email: 'test@test.com', password: 'hunter234')
+    @user = create(:user)
     sign_in @user
     @pull_request = PullRequest.create!(number: 11, repo: 'XanderStrike/test', html_url: 'https://github.com/XanderStrike/test/pull/11')
   end

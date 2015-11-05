@@ -8,6 +8,12 @@ require 'rails/test_help'
 require 'vcr'
 require 'mocha/mini_test'
 
+require 'github_stubs'
+
+class MiniTest::Test
+  include FactoryGirl::Syntax::Methods
+end
+
 class ActiveSupport::TestCase
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
   fixtures :all
