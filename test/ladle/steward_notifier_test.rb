@@ -4,25 +4,43 @@ require 'steward_notifier'
 class StewardNotifierTest < ActionController::TestCase
   include VCRHelpers
 
-  PullRequestLike = Struct.new(:html_url, :title, :description)
-
   setup do
     @stewards = {
       'xanderstrike' => ['/stewards.yml', '/test/stewards.yml'],
+      'counterstrike'=> ['/stewards.yml'],
       'boop'         => ['/stewards.yml']
     }
-    @notifier = StewardNotifier.new(@stewards, 'XanderStrike/test', PullRequestLike.new('https://github.com/XanderStrike/test/pull/11'))
+    @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
+    @notifier = StewardNotifier.new(@stewards, 'XanderStrike/test', @pull_request)
   end
 
   test 'assigns the stewards and the handler' do
     assert_equal @stewards, @notifier.instance_variable_get(:@stewards_map)
-    assert_equal 'https://github.com/XanderStrike/test/pull/11', @notifier.instance_variable_get(:@pull_request).html_url
+    assert_equal @pull_request, @notifier.instance_variable_get(:@pull_request)
   end
 
-  test 'notify should send emails to users' do
+  test 'notify' do
     user = create(:user, email: 'xander@strike.com', github_username: 'xanderstrike')
     @notifier.expects(:send_email).with(user, ['/stewards.yml', '/test/stewards.yml'])
+    @notifier.expects(:create_notification).with([user])
     @notifier.notify
+  end
+
+  test 'notify - error records notifications for non errored notifications' do
+    user1 = create(:user, email: 'xander@strike.com', github_username: 'xanderstrike')
+    user2 = create(:user, email: 'counter@strike.com', github_username: 'counterstrike')
+
+    error = RuntimeError.new("Oh no!")
+
+    @notifier.expects(:send_email).with(user1, anything)
+    @notifier.expects(:send_email).with(user2, anything).raises(error)
+    @notifier.expects(:create_notification).with([user1])
+
+    raised = assert_raises(error.class) do
+      @notifier.notify
+    end
+
+    assert_equal error, raised
   end
 
   test 'send_email uses UserMailer' do
@@ -35,5 +53,27 @@ class StewardNotifierTest < ActionController::TestCase
 
     assert_equal "[XanderStrike/test] Ladle Alert: New Pull Request", notify_email.subject
     assert_equal 'hello@kitty.com', notify_email.to[0]
+  end
+
+  test 'create_notification' do
+    user1 = create(:user)
+    user2 = create(:user)
+
+    notification = nil
+    assert_difference('Notification.count') do
+      notification = @notifier.send(:create_notification, [user1, user2])
+    end
+
+    assert_equal @pull_request, notification.pull_request
+    assert_equal [user1, user2], notification.notified_users
+  end
+
+  test 'create_notification - empty' do
+    notification = nil
+    assert_no_difference('Notification.count') do
+      notification = @notifier.send(:create_notification, [])
+    end
+
+    assert_equal nil, notification
   end
 end
