@@ -4,6 +4,6 @@ class PullRequestTest < ActiveSupport::TestCase
   test 'has validations' do
     pr = PullRequest.create
     refute pr.valid?
-    assert_equal({ number: ["can't be blank"], repo: ["can't be blank"] }, pr.errors.messages)
+    assert_equal({ number: ["can't be blank"], repository: ["can't be blank"] }, pr.errors.messages)
   end
 end

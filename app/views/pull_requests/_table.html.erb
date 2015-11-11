@@ -12,7 +12,7 @@
     <% pull_requests.each do |pull_request| %>
       <tr>
         <td><%= pull_request.created_at %></td>
-        <td><%= link_to "#{pull_request.repo}##{pull_request.number}", pull_request.html_url %></td>
+        <td><%= link_to "#{pull_request.repository.name}##{pull_request.number}", pull_request.html_url %></td>
         <th><%= pull_request.handled.to_s %></th>
         <td><%= link_to 'Show', pull_request %></td>
         <td><%= link_to 'Edit', edit_pull_request_path(pull_request) %></td>

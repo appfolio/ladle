@@ -11,18 +11,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151105000006) do
+ActiveRecord::Schema.define(version: 20151111202150) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "pull_requests", force: :cascade do |t|
-    t.string   "repo",                       null: false
-    t.integer  "number",                     null: false
+    t.integer  "number",                        null: false
     t.string   "html_url"
-    t.boolean  "handled",    default: false, null: false
-    t.datetime "created_at",                 null: false
-    t.datetime "updated_at",                 null: false
+    t.boolean  "handled",       default: false, null: false
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+    t.integer  "repository_id",                 null: false
   end
 
   create_table "repositories", force: :cascade do |t|
@@ -60,5 +60,6 @@ ActiveRecord::Schema.define(version: 20151105000006) do
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
   add_index "users", ["uid"], name: "index_users_on_uid", using: :btree
 
+  add_foreign_key "pull_requests", "repositories"
   add_foreign_key "repositories", "users", column: "access_via_id"
 end

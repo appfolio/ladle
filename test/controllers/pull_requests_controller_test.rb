@@ -4,7 +4,8 @@ class PullRequestsControllerTest < ActionController::TestCase
   setup do
     @user = create(:user)
     sign_in @user
-    @pull_request = PullRequest.create!(number: 11, repo: 'XanderStrike/test', html_url: 'https://github.com/XanderStrike/test/pull/11')
+    repository = create(:repository, name: 'XanderStrike/test')
+    @pull_request = PullRequest.create!(number: 11, repository: repository, html_url: 'https://github.com/XanderStrike/test/pull/11')
   end
 
   test 'should get index' do
