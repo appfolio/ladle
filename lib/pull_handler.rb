@@ -10,6 +10,7 @@ class PullHandler
     @pull_request = PullRequest.find_or_create_by(
       repository:  @repository,
       number:      @pull_request_data[:number],
+      title:       @pull_request_data[:title],
       html_url:    @pull_request_data[:url],
       description: @pull_request_data[:description])
   end
