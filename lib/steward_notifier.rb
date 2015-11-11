@@ -10,7 +10,7 @@ class StewardNotifier
     @stewards_map.each do |github_username, stewards_files_paths|
       user = User.find_by_github_username(github_username)
 
-      if user
+      if user && ! user_has_been_notified?(user)
         send_email(user, stewards_files_paths)
         notified_users << user
       end
@@ -20,6 +20,10 @@ class StewardNotifier
   end
 
   private
+
+  def user_has_been_notified?(user)
+    user.notifications.where(pull_request: @pull_request).exists?
+  end
 
   def send_email(user, stewards_files)
     UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, stewards_files: stewards_files).deliver_now

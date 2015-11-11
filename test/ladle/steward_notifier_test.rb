@@ -20,15 +20,15 @@ class StewardNotifierTest < ActionController::TestCase
   end
 
   test 'notify' do
-    user = create(:user, email: 'xander@strike.com', github_username: 'xanderstrike')
+    user = create(:user, github_username: 'xanderstrike')
     @notifier.expects(:send_email).with(user, ['/stewards.yml', '/test/stewards.yml'])
     @notifier.expects(:create_notification).with([user])
     @notifier.notify
   end
 
   test 'notify - error records notifications for non errored notifications' do
-    user1 = create(:user, email: 'xander@strike.com', github_username: 'xanderstrike')
-    user2 = create(:user, email: 'counter@strike.com', github_username: 'counterstrike')
+    user1 = create(:user, github_username: 'xanderstrike')
+    user2 = create(:user, github_username: 'counterstrike')
 
     error = RuntimeError.new("Oh no!")
 
@@ -41,6 +41,19 @@ class StewardNotifierTest < ActionController::TestCase
     end
 
     assert_equal error, raised
+  end
+
+  test 'notify - avoid duplicate notifications' do
+    user = create(:user, github_username: 'xanderstrike')
+    notified_user = create(:user, github_username: 'counterstrike')
+
+    notification = create(:notification, pull_request: @pull_request)
+    notification.notified_users << notified_user
+    notification.save!
+
+    @notifier.expects(:send_email).with(user, ['/stewards.yml', '/test/stewards.yml'])
+    @notifier.expects(:create_notification).with([user])
+    @notifier.notify
   end
 
   test 'send_email uses UserMailer' do
