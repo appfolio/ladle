@@ -9,4 +9,25 @@ class NotificationTest < ActiveSupport::TestCase
     notification.pull_request = create(:pull_request)
     assert_predicate notification, :valid?
   end
+
+  test "has_and_belongs_to_many :notified_users" do
+    notification = Notification.create!(pull_request: create(:pull_request))
+    users = [
+      create(:user),
+      create(:user),
+    ]
+
+    users.each do |user|
+      notification.notified_users << user
+    end
+
+    notification.save!
+    users.map(&:reload)
+
+    assert_equal users, notification.notified_users
+
+    users.each do |user|
+      assert_equal notification, user.notifications.first
+    end
+  end
 end
