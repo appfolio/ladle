@@ -15,7 +15,7 @@ class GithubEventsController < ApplicationController
 
       pull_request_data = {
         number:      number,
-        url:         pull_request[:html_url],
+        html_url:    pull_request[:html_url],
         title:       pull_request[:title],
         description: pull_request[:description],
       }

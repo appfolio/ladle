@@ -4,17 +4,19 @@ require 'steward_notifier'
 class StewardNotifierTest < ActionController::TestCase
   include VCRHelpers
 
+  PullRequestLike = Struct.new(:html_url, :title, :description)
+
   setup do
     @stewards = {
       'xanderstrike' => ['/stewards.yml', '/test/stewards.yml'],
       'boop'         => ['/stewards.yml']
     }
-    @notifier = StewardNotifier.new(@stewards, 'XanderStrike/test', url: 'https://github.com/XanderStrike/test/pull/11')
+    @notifier = StewardNotifier.new(@stewards, 'XanderStrike/test', PullRequestLike.new('https://github.com/XanderStrike/test/pull/11'))
   end
 
   test 'assigns the stewards and the handler' do
     assert_equal @stewards, @notifier.instance_variable_get(:@stewards_map)
-    assert_equal 'https://github.com/XanderStrike/test/pull/11', @notifier.instance_variable_get(:@pull_request)[:url]
+    assert_equal 'https://github.com/XanderStrike/test/pull/11', @notifier.instance_variable_get(:@pull_request).html_url
   end
 
   test 'notify should send emails to users' do

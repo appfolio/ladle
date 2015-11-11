@@ -1,10 +1,10 @@
-<% if @pull_request[:description] %>
-<p><%= @pull_request[:description] %></p>
+<% if @pull_request.description %>
+<p><%= @pull_request.description %></p>
 <hr>
 <% end %>
 
 <h4>You can view, comment on, or merge this pull request online at:</h4>
-<p>&nbsp;&nbsp;<%= link_to @pull_request[:url], @pull_request[:url] %></p>
+<p>&nbsp;&nbsp;<%= link_to @pull_request.html_url, @pull_request.html_url %></p>
 
 <p>You were notified of this pull request because you are registered as a steward in these files:</p>
 

@@ -5,14 +5,13 @@ class PullHandler
 
   def initialize(repository:, pull_request_data:)
     @repository        = repository
-    @pull_request_data = pull_request_data
 
     @pull_request = PullRequest.find_or_create_by(
       repository:  @repository,
-      number:      @pull_request_data[:number],
-      title:       @pull_request_data[:title],
-      html_url:    @pull_request_data[:url],
-      description: @pull_request_data[:description])
+      number:      pull_request_data[:number],
+      title:       pull_request_data[:title],
+      html_url:    pull_request_data[:html_url],
+      description: pull_request_data[:description])
   end
 
   def handle
@@ -53,7 +52,7 @@ class PullHandler
       Rails.logger.info('No stewards found. Doing nothing.')
     else
       Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
-      StewardNotifier.new(stewards_map, @repository.name, @pull_request_data).notify
+      StewardNotifier.new(stewards_map, @repository.name, @pull_request).notify
       @pull_request.update_attributes!(handled: true)
     end
   end
