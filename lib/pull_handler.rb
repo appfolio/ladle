@@ -16,15 +16,11 @@ class PullHandler
       file[:filename]
     end
 
-    directories = filenames.map do |filename|
-      filename.sub(%r{(\/[^\/]+|[^\/]+)$}, '')
-    end
-
-    directories = directories.uniq
+    directories = directories_to_search(filenames)
 
     stewards_map = {}
     directories.each do |directory|
-      stewards_file_path = File.join('/', directory, 'stewards.yml')
+      stewards_file_path = File.join(directory, 'stewards.yml')
       begin
         contents = client.contents(@repository.name, path: stewards_file_path, ref: head_sha)[:content]
         contents = YAML.load(Base64.decode64(contents))
@@ -44,5 +40,20 @@ class PullHandler
       Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
       StewardNotifier.new(stewards_map, @repository.name, @pull_request).notify
     end
+  end
+
+  private
+
+  def directories_to_search(file_paths)
+    directories = []
+    file_paths.each do |path|
+      path = Pathname.new("/#{path}")
+      path = path.dirname
+      path.ascend do |path_parent|
+        directories << path_parent.to_s
+      end
+    end
+
+    directories.uniq.sort.reverse
   end
 end

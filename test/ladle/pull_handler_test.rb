@@ -16,7 +16,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     end
   end
 
-  test 'creates a pull request object if it does not already exist' do
+  test 'notifies stewards' do
     mock_notifier = mock
     mock_notifier.expects(:notify)
     StewardNotifier.expects(:new)
@@ -32,5 +32,24 @@ class PullHandlerTest < ActiveSupport::TestCase
     using_vcr do
       PullHandler.new(@pull_request).handle
     end
+  end
+
+  test "directories_to_search" do
+    expected_directories = [
+      "/some/really/deep",
+      "/some/really",
+      "/some",
+      "/other",
+      "/",
+    ]
+
+    handler     = PullHandler.new(@pull_request)
+    directories = handler.send(:directories_to_search,
+                               [
+                                 "some/really/deep/file.rb",
+                                 "other/file.rb",
+                               ])
+
+    assert_equal expected_directories, directories
   end
 end
