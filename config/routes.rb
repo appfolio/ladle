@@ -6,7 +6,5 @@ Rails.application.routes.draw do
   resource :user_settings, only: [:edit, :update]
   resource :notifications, only: [:index]
 
-  resources :pull_requests
-
   root to: "notifications#index"
 end
