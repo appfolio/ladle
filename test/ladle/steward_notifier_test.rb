@@ -2,8 +2,6 @@ require 'test_helper'
 require 'steward_notifier'
 
 class StewardNotifierTest < ActionController::TestCase
-  include VCRHelpers
-
   setup do
     @stewards = {
       'xanderstrike' => ['/stewards.yml', '/test/stewards.yml'],
