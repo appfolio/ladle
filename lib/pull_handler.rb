@@ -1,17 +1,9 @@
 require 'steward_notifier'
 
 class PullHandler
-  attr_reader :repository, :number, :html_url
-
-  def initialize(repository:, pull_request_data:)
-    @repository        = repository
-
-    @pull_request = PullRequest.find_or_create_by(
-      repository:  @repository,
-      number:      pull_request_data[:number],
-      title:       pull_request_data[:title],
-      html_url:    pull_request_data[:html_url],
-      description: pull_request_data[:description])
+  def initialize(pull_request)
+    @pull_request = pull_request
+    @repository   = pull_request.repository
   end
 
   def handle

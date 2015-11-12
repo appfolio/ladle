@@ -13,14 +13,14 @@ class GithubEventsController < ApplicationController
       number = params.require(:number)
       Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
 
-      pull_request_data = {
+      pull_request = find_pull_request({
         number:      number,
         html_url:    pull_request[:html_url],
         title:       pull_request[:title],
         description: pull_request[:description],
-      }
-      PullHandler.new(repository:        @repository,
-                      pull_request_data: pull_request_data).handle
+      })
+
+      PullHandler.new(pull_request).handle
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end
@@ -29,6 +29,15 @@ class GithubEventsController < ApplicationController
   end
 
   private
+
+  def find_pull_request(data)
+    PullRequest.find_or_create_by(
+      repository:  @repository,
+      number:      data[:number],
+      title:       data[:title],
+      html_url:    data[:html_url],
+      description: data[:description])
+  end
 
   def find_repository
     repository = params.require(:repository)
