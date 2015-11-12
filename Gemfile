@@ -60,7 +60,6 @@ end
 group :test do
   gem 'mocha'
   gem 'webmock'
-  gem 'vcr'
   gem 'coveralls', require: false
 end
 

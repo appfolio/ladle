@@ -20,7 +20,8 @@ class GithubEventsController < ApplicationController
         description: pull_request[:description],
       })
 
-      PullHandler.new(pull_request).handle
+      notifier = StewardNotifier.new(pull_request, @repository.name)
+      PullHandler.new(pull_request, notifier).handle
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end
