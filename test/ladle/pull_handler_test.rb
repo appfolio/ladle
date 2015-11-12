@@ -30,9 +30,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
     Rails.stubs(:logger).returns(logger_mock)
 
-    StewardNotifier.expects(:new).never
-
-    PullHandler.new(@pull_request).handle
+    PullHandler.new(@pull_request, mock('notifier')).handle
   end
 
   test 'notifies stewards' do
@@ -67,20 +65,15 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client.expects(:contents).with(@repository.name, path: '/stewards.yml', ref: '123432143412412342').returns(content: stewards_file2_contents)
 
-    mock_notifier = mock
-    mock_notifier.expects(:notify)
-    StewardNotifier.expects(:new)
+    notifier = mock
+    notifier.expects(:notify)
       .with({
               'xanderstrike'      => ['/sub/stewards.yml', '/stewards.yml'],
               'fadsfadsfadsfadsf' => ['/sub/stewards.yml'],
               'bob'               => ['/stewards.yml']
-            },
-            @repository.name,
-            @pull_request
-      )
-      .returns(mock_notifier)
+            })
 
-    PullHandler.new(@pull_request).handle
+    PullHandler.new(@pull_request, notifier).handle
   end
 
   test "directories_to_search" do
@@ -92,7 +85,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       "/",
     ]
 
-    handler     = PullHandler.new(@pull_request)
+    handler     = PullHandler.new(@pull_request, mock('notifier'))
     directories = handler.send(:directories_to_search,
                                [
                                  "some/really/deep/file.rb",

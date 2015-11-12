@@ -1,13 +1,12 @@
 class StewardNotifier
-  def initialize(stewards_map, repository_name, pull_request)
+  def initialize(repository_name, pull_request)
     @repository_name = repository_name
     @pull_request    = pull_request
-    @stewards_map    = stewards_map
   end
 
-  def notify
+  def notify(stewards_map)
     notified_users = []
-    @stewards_map.each do |github_username, stewards_files_paths|
+    stewards_map.each do |github_username, stewards_files_paths|
       user = User.find_by_github_username(github_username)
 
       if user && ! user_has_been_notified?(user)

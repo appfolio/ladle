@@ -57,13 +57,16 @@ class GithubEventsControllerTest < ActionController::TestCase
     handler_mock = mock
     handler_mock.expects(:handle)
 
-    PullHandler.expects(:new).with(all_of(
-                                     is_a(PullRequest),
-                                     responds_with(:number, 5),
-                                     responds_with(:html_url, 'www.test.com'),
-                                     responds_with(:title, 'Hello Dude'),
-                                     responds_with(:description, "We did it!"),
-                                   )).returns(handler_mock)
+    PullHandler.expects(:new).with(
+      all_of(
+        is_a(PullRequest),
+        responds_with(:number, 5),
+        responds_with(:html_url, 'www.test.com'),
+        responds_with(:title, 'Hello Dude'),
+        responds_with(:description, "We did it!"),
+      ),
+      is_a(StewardNotifier)
+    ).returns(handler_mock)
 
     @controller.expects(:verify_signature)
 
@@ -106,7 +109,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     handler_mock = mock
     handler_mock.expects(:handle)
 
-    PullHandler.expects(:new).with(pull_request).returns(handler_mock)
+    PullHandler.expects(:new).with(pull_request, is_a(StewardNotifier)).returns(handler_mock)
 
     @controller.expects(:verify_signature)
 

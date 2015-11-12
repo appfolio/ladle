@@ -1,9 +1,11 @@
 require 'steward_notifier'
 
 class PullHandler
-  def initialize(pull_request)
+  def initialize(pull_request, notifier)
     @pull_request = pull_request
     @repository   = pull_request.repository
+
+    @notifier = notifier
   end
 
   def handle
@@ -38,7 +40,7 @@ class PullHandler
       Rails.logger.info('No stewards found. Doing nothing.')
     else
       Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
-      StewardNotifier.new(stewards_map, @repository.name, @pull_request).notify
+      @notifier.notify(stewards_map)
     end
   end
 

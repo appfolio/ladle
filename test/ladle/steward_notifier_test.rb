@@ -9,11 +9,10 @@ class StewardNotifierTest < ActionController::TestCase
       'boop'         => ['/stewards.yml']
     }
     @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
-    @notifier = StewardNotifier.new(@stewards, 'XanderStrike/test', @pull_request)
+    @notifier = StewardNotifier.new('XanderStrike/test', @pull_request)
   end
 
-  test 'assigns the stewards and the handler' do
-    assert_equal @stewards, @notifier.instance_variable_get(:@stewards_map)
+  test 'assigns the handler' do
     assert_equal @pull_request, @notifier.instance_variable_get(:@pull_request)
   end
 
@@ -21,7 +20,7 @@ class StewardNotifierTest < ActionController::TestCase
     user = create(:user, github_username: 'xanderstrike')
     @notifier.expects(:send_email).with(user, ['/stewards.yml', '/test/stewards.yml'])
     @notifier.expects(:create_notification).with([user])
-    @notifier.notify
+    @notifier.notify(@stewards)
   end
 
   test 'notify - error records notifications for non errored notifications' do
@@ -35,7 +34,7 @@ class StewardNotifierTest < ActionController::TestCase
     @notifier.expects(:create_notification).with([user1])
 
     raised = assert_raises(error.class) do
-      @notifier.notify
+      @notifier.notify(@stewards)
     end
 
     assert_equal error, raised
@@ -51,7 +50,7 @@ class StewardNotifierTest < ActionController::TestCase
 
     @notifier.expects(:send_email).with(user, ['/stewards.yml', '/test/stewards.yml'])
     @notifier.expects(:create_notification).with([user])
-    @notifier.notify
+    @notifier.notify(@stewards)
   end
 
   test 'send_email uses UserMailer' do
