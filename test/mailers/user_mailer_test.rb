@@ -2,7 +2,7 @@ require 'test_helper'
 
 class UserMailerTest < ActionMailer::TestCase
 
-  PullRequestLike = Struct.new(:html_url, :title, :description)
+  PullRequestLike = Struct.new(:html_url, :title, :body)
 
   test "notify - minimum" do
     user  = create(:user)

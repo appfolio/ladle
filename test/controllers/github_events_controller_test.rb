@@ -63,7 +63,7 @@ class GithubEventsControllerTest < ActionController::TestCase
         responds_with(:number, 5),
         responds_with(:html_url, 'www.test.com'),
         responds_with(:title, 'Hello Dude'),
-        responds_with(:description, "We did it!"),
+        responds_with(:body, "We did it!"),
       ),
       is_a(StewardNotifier)
     ).returns(handler_mock)
@@ -75,10 +75,10 @@ class GithubEventsControllerTest < ActionController::TestCase
            format:       :json,
            number:       5,
            pull_request: {
-             state:       'open',
-             html_url:    'www.test.com',
-             title:       'Hello Dude',
-             description: "We did it!"
+             state:    'open',
+             html_url: 'www.test.com',
+             title:    'Hello Dude',
+             body:     "We did it!"
            },
            repository:   {full_name: repository.name}
     end
@@ -104,7 +104,7 @@ class GithubEventsControllerTest < ActionController::TestCase
   test 'handles the pull - updates pull request' do
     repository = create_repository
 
-    pull_request = create(:pull_request, repository: repository, number: 5, description: "old description", title: "old title")
+    pull_request = create(:pull_request, repository: repository, number: 5, body: "old description", title: "old title")
 
     handler_mock = mock
     handler_mock.expects(:handle)
@@ -118,10 +118,10 @@ class GithubEventsControllerTest < ActionController::TestCase
            format:       :json,
            number:       pull_request.number,
            pull_request: {
-             state:       'open',
-             html_url:    pull_request.html_url,
-             title:       'Hello Dude',
-             description: "We did it!"
+             state:    'open',
+             html_url: pull_request.html_url,
+             title:    'Hello Dude',
+             body:     "We did it!"
            },
            repository:   {full_name: repository.name}
     end
@@ -131,7 +131,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     pull_request.reload
 
     assert_equal 'Hello Dude', pull_request.title
-    assert_equal 'We did it!', pull_request.description
+    assert_equal 'We did it!', pull_request.body
   end
 
   private

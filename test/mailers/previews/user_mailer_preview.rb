@@ -2,7 +2,7 @@
 class UserMailerPreview < ActionMailer::Preview
 
   UserLike = Struct.new(:email, :github_username)
-  PullRequestLike = Struct.new(:html_url, :title, :description)
+  PullRequestLike = Struct.new(:html_url, :title, :body)
 
   def notify
     UserMailer.notify(user:           UserLike.new('someguy@someplace.com', 'dhh'),
