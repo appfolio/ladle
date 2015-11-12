@@ -1,6 +1,6 @@
 class AssociateRepositoryToPullRequest < ActiveRecord::Migration
   def up
-    add_column :pull_requests, :repository_id, :integer, null: false
+    add_column :pull_requests, :repository_id, :integer
 
     execute <<-SQL
       UPDATE pull_requests
@@ -11,11 +11,13 @@ class AssociateRepositoryToPullRequest < ActiveRecord::Migration
 
     remove_column :pull_requests, :repo
 
+    change_column_null :pull_requests, :repository_id, false
+
     add_foreign_key :pull_requests, :repositories
   end
 
   def down
-    add_column :pull_requests, :repo, :string, null: false
+    add_column :pull_requests, :repo, :string
 
     execute <<-SQL
       UPDATE pull_requests
@@ -27,5 +29,7 @@ class AssociateRepositoryToPullRequest < ActiveRecord::Migration
     remove_foreign_key :pull_requests, :repositories
 
     remove_column :pull_requests, :repository_id
+
+    change_column_null :pull_requests, :repo, false
   end
 end
