@@ -13,18 +13,21 @@ class PullHandlerTest < ActiveSupport::TestCase
     client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
       {
         head: {
-          sha: '123432143412412342'
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
         }
       })
 
     client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
       [
-        {filename: 'one.rb'},
-        {filename: 'sub/marine.rb'},
+        {status: "new", filename: 'one.rb'},
+        {status: "modified", filename: 'sub/marine.rb'},
       ])
 
-    client.expects(:contents).with(@repository.name, path: '/sub/stewards.yml', ref: '123432143412412342').raises(Octokit::NotFound)
-    client.expects(:contents).with(@repository.name, path: '/stewards.yml', ref: '123432143412412342').raises(Octokit::NotFound)
+    client.expects(:contents).with(@repository.name, path: '/sub/stewards.yml', ref: 'branch_head').raises(Octokit::NotFound)
+    client.expects(:contents).with(@repository.name, path: '/stewards.yml', ref: 'branch_head').raises(Octokit::NotFound)
 
     logger_mock = mock
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
@@ -38,32 +41,30 @@ class PullHandlerTest < ActiveSupport::TestCase
     client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
       {
         head: {
-          sha: '123432143412412342'
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
         }
       })
 
     client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
       [
-        {filename: 'one.rb'},
-        {filename: 'sub/marine.rb'},
+        {status: "new", filename: 'one.rb'},
+        {status: "modified", filename: 'sub/marine.rb'},
       ])
 
-    stewards_file1 = <<-YAML
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub/stewards.yml', ref: 'branch_head')
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
     YAML
-    stewards_file1_contents = Base64.encode64(stewards_file1)
-    client.expects(:contents).with(@repository.name, path: '/sub/stewards.yml', ref: '123432143412412342').returns(content: stewards_file1_contents)
 
-    stewards_file2 = <<-YAML
+    stub_stewards_file_contents(client, <<-YAML, path: '/stewards.yml', ref: 'branch_head')
       stewards:
         - xanderstrike
         - bob
     YAML
-    stewards_file2_contents = Base64.encode64(stewards_file2)
-
-    client.expects(:contents).with(@repository.name, path: '/stewards.yml', ref: '123432143412412342').returns(content: stewards_file2_contents)
 
     notifier = mock
     notifier.expects(:notify)
@@ -71,6 +72,96 @@ class PullHandlerTest < ActiveSupport::TestCase
               'xanderstrike'      => ['/sub/stewards.yml', '/stewards.yml'],
               'fadsfadsfadsfadsf' => ['/sub/stewards.yml'],
               'bob'               => ['/stewards.yml']
+            })
+
+    PullHandler.new(@pull_request, notifier).handle
+  end
+
+  test 'notifies old stewards' do
+    client = Octokit::Client.any_instance
+    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
+      {
+        head: {
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
+        }
+      })
+
+    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
+      [
+        {
+          status: 'removed',
+          filename: 'stewards.yml'
+        },
+        {
+          status: "new",
+          filename: 'one.rb'
+        },
+        {
+          status: "modified",
+          filename: 'sub/marine.rb'
+        },
+        {
+          status: "modified",
+          filename: 'sub/stewards.yml'
+        },
+        {
+          status: "removed",
+          filename: 'sub2/sandwich'
+        },
+        {
+          status: "removed",
+          filename: 'sub3/stewards.yml'
+        },
+      ])
+
+    client.expects(:contents)
+      .with(@repository.name, path: '/sub3/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub2/stewards.yml', ref: 'branch_head')
+      stewards:
+        - hamburglar
+    YAML
+
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub/stewards.yml', ref: 'branch_head')
+      stewards:
+        - xanderstrike
+        - fadsfadsfadsfadsf
+    YAML
+
+    client.expects(:contents)
+      .with(@repository.name, path: '/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: '/stewards.yml', ref: 'parent_head')
+      stewards:
+        - xanderstrike
+        - bob
+    YAML
+
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub/stewards.yml', ref: 'parent_head')
+      stewards:
+        - jeb
+    YAML
+
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub3/stewards.yml', ref: 'parent_head')
+      stewards:
+        - xanderstrike
+        - bob
+    YAML
+
+
+    notifier = mock
+    notifier.expects(:notify)
+      .with({
+              'xanderstrike'      => ['/sub/stewards.yml', '/stewards.yml', '/sub3/stewards.yml'],
+              'fadsfadsfadsfadsf' => ['/sub/stewards.yml'],
+              'bob'               => ['/stewards.yml', '/sub3/stewards.yml'],
+              'jeb'               => ['/sub/stewards.yml'],
+              'hamburglar'        => ['/sub2/stewards.yml']
             })
 
     PullHandler.new(@pull_request, notifier).handle
@@ -93,5 +184,13 @@ class PullHandlerTest < ActiveSupport::TestCase
                                ])
 
     assert_equal expected_directories, directories
+  end
+
+  private
+
+  def stub_stewards_file_contents(client, contents, path:, ref:)
+    client.expects(:contents)
+      .with(@repository.name, path: path, ref: ref)
+      .returns(content: Base64.encode64(contents))
   end
 end
