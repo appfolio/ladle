@@ -167,7 +167,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     PullHandler.new(@pull_request, notifier).handle
   end
 
-  test "directories_to_search" do
+  test "directories_in_file_paths" do
     expected_directories = [
       "/some/really/deep",
       "/some/really",
@@ -177,7 +177,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     ]
 
     handler     = PullHandler.new(@pull_request, mock('notifier'))
-    directories = handler.send(:directories_to_search,
+    directories = handler.send(:directories_in_file_paths,
                                [
                                  "some/really/deep/file.rb",
                                  "other/file.rb",
