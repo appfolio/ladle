@@ -64,7 +64,7 @@ class StewardNotifierTest < ActionController::TestCase
 
     notify_email = ActionMailer::Base.deliveries.last
 
-    assert_equal "[XanderStrike/test] Ladle Alert: New Pull Request", notify_email.subject
+    assert_equal "[XanderStrike/test] Ladle Alert: Change up the World War Z.", notify_email.subject
     assert_equal 'hello@kitty.com', notify_email.to[0]
   end
 

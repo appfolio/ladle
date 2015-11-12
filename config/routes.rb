@@ -4,7 +4,9 @@ Rails.application.routes.draw do
   devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
 
   resource :user_settings, only: [:edit, :update]
+  resource :notifications, only: [:index]
+
   resources :pull_requests
 
-  root to: "home#index"
+  root to: "notifications#index"
 end
