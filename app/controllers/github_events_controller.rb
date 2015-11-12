@@ -31,12 +31,14 @@ class GithubEventsController < ApplicationController
   private
 
   def find_pull_request(data)
-    PullRequest.find_or_create_by(
-      repository:  @repository,
-      number:      data[:number],
-      title:       data[:title],
-      html_url:    data[:html_url],
-      description: data[:description])
+    ActiveRecord::Base.transaction do
+      pull_request = PullRequest.find_or_create_by!(repository: @repository, number: data[:number], html_url: data[:html_url])
+      pull_request.update_attributes!(
+        title:       data[:title],
+        description: data[:description]
+      )
+      pull_request
+    end
   end
 
   def find_repository
