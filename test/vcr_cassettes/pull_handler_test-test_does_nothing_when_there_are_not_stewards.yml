@@ -2,7 +2,7 @@
 http_interactions:
 - request:
     method: get
-    uri: https://api.github.com/repos/xanderstrike/test/pulls/1
+    uri: https://api.github.com/repos/xanderstrike/test/pulls/30
     body:
       encoding: US-ASCII
       string: ''
@@ -77,7 +77,7 @@ http_interactions:
   recorded_at: Fri, 23 Oct 2015 21:33:34 GMT
 - request:
     method: get
-    uri: https://api.github.com/repos/xanderstrike/test/pulls/1/files
+    uri: https://api.github.com/repos/xanderstrike/test/pulls/30/files
     body:
       encoding: US-ASCII
       string: ''

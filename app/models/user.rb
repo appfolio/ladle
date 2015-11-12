@@ -4,6 +4,8 @@ class User < ActiveRecord::Base
 
   devise :omniauthable, :omniauth_providers => [:github]
 
+  has_and_belongs_to_many :notifications, join_table: :notified_users
+
   validates :github_username, presence: true, uniqueness: true
   validates :uid, presence: true
 

@@ -1,0 +1,15 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4>
+      <%= notification.title %>
+      <div class="pull-right">
+        <%= time_tag notification.created_at, title: notification.created_at do %>
+          <%= time_ago_in_words(notification.created_at) %> ago
+        <% end %>
+      </div>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <%= link_to notification.link, notification.link, target: '_blank' %>
+  </div>
+</div>

@@ -1,13 +1,18 @@
 require 'test_helper'
 
 class UserMailerTest < ActionMailer::TestCase
+
+  PullRequestLike = Struct.new(:html_url, :title, :description)
+
   test "notify - minimum" do
     user  = create(:user)
     email = UserMailer.notify(user:           user,
                               repository:     'XanderStrike/test',
-                              pull_request:   {
-                                url: 'https://github.com/XanderStrike/test/pull/11',
-                              },
+                              pull_request: PullRequestLike.new(
+                                'https://github.com/XanderStrike/test/pull/11',
+                                nil,
+                                nil
+                              ),
                               stewards_files: ['/stewards.yml', '/bleh/stewards.yml']).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?
@@ -22,11 +27,11 @@ class UserMailerTest < ActionMailer::TestCase
     user  = create(:user)
     email = UserMailer.notify(user:           user,
                               repository:     'XanderStrike/test',
-                              pull_request:   {
-                                url:         'https://github.com/XanderStrike/test/pull/11',
-                                title:       'Hey ho!',
-                                description: 'These changes are luminous',
-                              },
+                              pull_request:   PullRequestLike.new(
+                                'https://github.com/XanderStrike/test/pull/11',
+                                'Hey ho!',
+                                'These changes are luminous',
+                              ),
                               stewards_files: ['/stewards.yml', '/bleh/stewards.yml']).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?

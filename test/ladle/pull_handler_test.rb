@@ -7,52 +7,30 @@ class PullHandlerTest < ActiveSupport::TestCase
   setup do
     user = create(:user)
     @repository = Repository.create!(name: 'xanderstrike/test', webhook_secret: 'whatever', access_via: user)
-  end
-
-  test 'creates PullRequest' do
-    ph = nil
-    assert_difference('PullRequest.count', 1) do
-      ph = PullHandler.new(repository: @repository, pull_request_data: {number: 1, url: 'www.test.com'})
-    end
-
-    assert_equal @repository, ph.instance_variable_get('@repository')
-
-    pull_request = ph.instance_variable_get('@pull_request')
-    assert_equal 1, pull_request.number
-    assert_equal 'www.test.com', pull_request.html_url
+    @pull_request = create(:pull_request, repository: @repository, number: 30, html_url: 'www.test.com')
   end
 
   test 'does nothing when there are not stewards' do
     using_vcr do
-      PullHandler.new(repository: @repository, pull_request_data: {number: 1, url: 'www.test.com'}).handle
+      PullHandler.new(@pull_request).handle
     end
   end
 
-  test 'does nothing when pull already handled' do
-    PullRequest.create!(repo: 'xanderstrike/test', number: 1, html_url: 'www.test.com', handled: true)
-
-    Rails.logger.expects(:info).with('Pull already handled, skipping.')
-    PullHandler.new(repository: @repository, pull_request_data: {number: 1, url: 'www.test.com'}).handle
-  end
-
   test 'creates a pull request object if it does not already exist' do
-    pull_request_data = {number: 30, url: 'www.test.com'}
-
     mock_notifier = mock
     mock_notifier.expects(:notify)
     StewardNotifier.expects(:new)
-      .with({'xanderstrike' => ['/stewards.yml'],
-             'fadsfadsfadsfadsf' => ['/stewards.yml'],
+      .with({'xanderstrike'                   => ['/stewards.yml'],
+             'fadsfadsfadsfadsf'              => ['/stewards.yml'],
              'alexander.standke@appfolio.com' => ['/stewards.yml'],
-             'xanderstrike@gmail.com' => ['/stewards.yml']},
+             'xanderstrike@gmail.com'         => ['/stewards.yml']},
             @repository.name,
-            pull_request_data)
+            @pull_request
+      )
       .returns(mock_notifier)
 
     using_vcr do
-      assert_difference('PullRequest.count', 1) do
-        PullHandler.new(repository: @repository, pull_request_data: pull_request_data).handle
-      end
+      PullHandler.new(@pull_request).handle
     end
   end
 end
