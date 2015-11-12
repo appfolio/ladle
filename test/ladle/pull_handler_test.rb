@@ -28,13 +28,6 @@ class PullHandlerTest < ActiveSupport::TestCase
     end
   end
 
-  test 'does nothing when pull already handled' do
-    PullRequest.create!(repository: @repository, number: 1, html_url: 'www.test.com', handled: true)
-
-    Rails.logger.expects(:info).with('Pull already handled, skipping.')
-    PullHandler.new(repository: @repository, pull_request_data: {number: 1, html_url: 'www.test.com'}).handle
-  end
-
   test 'creates a pull request object if it does not already exist' do
     pull_request_data = {number: 30, html_url: 'www.test.com'}
 

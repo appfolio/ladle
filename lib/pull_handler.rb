@@ -15,8 +15,6 @@ class PullHandler
   end
 
   def handle
-    return Rails.logger.info('Pull already handled, skipping.') if @pull_request.handled?
-
     client = Octokit::Client.new(access_token: @repository.access_token)
 
     pr = client.pull_request(@repository.name, @pull_request.number)
@@ -53,7 +51,6 @@ class PullHandler
     else
       Rails.logger.info("Found #{stewards_map.size} stewards. Notifying.")
       StewardNotifier.new(stewards_map, @repository.name, @pull_request).notify
-      @pull_request.update_attributes!(handled: true)
     end
   end
 end

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151111220455) do
+ActiveRecord::Schema.define(version: 20151112003629) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -31,12 +31,11 @@ ActiveRecord::Schema.define(version: 20151111220455) do
   add_index "notified_users", ["user_id"], name: "index_notified_users_on_user_id", using: :btree
 
   create_table "pull_requests", force: :cascade do |t|
-    t.integer  "number",                        null: false
+    t.integer  "number",        null: false
     t.string   "html_url"
-    t.boolean  "handled",       default: false, null: false
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
-    t.integer  "repository_id",                 null: false
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
+    t.integer  "repository_id", null: false
     t.string   "description"
     t.string   "title"
   end
