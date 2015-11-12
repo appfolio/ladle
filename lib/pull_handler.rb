@@ -16,12 +16,12 @@ class PullHandler
     parent_head = pr[:base][:sha]
 
     files_changed = []
-    removed_stewards_files = []
+    changed_steward_files = []
     client.pull_request_files(@repository.name, @pull_request.number).each do |file|
       files_changed << file[:filename]
 
-      if file[:status] == 'removed' && file[:filename] =~ /stewards\.yml$/
-        removed_stewards_files << file[:filename]
+      if file[:filename] =~ /stewards\.yml$/ && ( file[:status] == 'removed' || file[:status] == 'modified' )
+        changed_steward_files << file[:filename]
       end
     end
 
@@ -34,7 +34,7 @@ class PullHandler
       parse_stewards_file(client, stewards_file_path, head_sha, stewards_map)
     end
 
-    removed_stewards_files.each do |stewards_file_path|
+    changed_steward_files.each do |stewards_file_path|
       stewards_file_path = "/#{stewards_file_path}"
       parse_stewards_file(client, stewards_file_path, parent_head, stewards_map)
     end

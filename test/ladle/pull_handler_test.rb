@@ -142,11 +142,17 @@ class PullHandlerTest < ActiveSupport::TestCase
         - bob
     YAML
 
+    stub_stewards_file_contents(client, <<-YAML, path: '/sub/stewards.yml', ref: 'parent_head')
+      stewards:
+        - jeb
+    YAML
+
     stub_stewards_file_contents(client, <<-YAML, path: '/sub3/stewards.yml', ref: 'parent_head')
       stewards:
         - xanderstrike
         - bob
     YAML
+
 
     notifier = mock
     notifier.expects(:notify)
@@ -154,6 +160,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               'xanderstrike'      => ['/sub/stewards.yml', '/stewards.yml', '/sub3/stewards.yml'],
               'fadsfadsfadsfadsf' => ['/sub/stewards.yml'],
               'bob'               => ['/stewards.yml', '/sub3/stewards.yml'],
+              'jeb'               => ['/sub/stewards.yml'],
               'hamburglar'        => ['/sub2/stewards.yml']
             })
 
