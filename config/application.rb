@@ -31,4 +31,5 @@ module Ladle
   end
 end
 
+require 'ladle'
 require 'github_config'

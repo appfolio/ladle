@@ -4,13 +4,13 @@ class StewardNotifier
     @pull_request    = pull_request
   end
 
-  def notify(stewards_map)
+  def notify(stewards_changes)
     notified_users = []
-    stewards_map.each do |github_username, stewards_files_paths|
+    stewards_changes.each do |github_username, stewards_change_sets|
       user = User.find_by_github_username(github_username)
 
       if user && ! user_has_been_notified?(user)
-        send_email(user, stewards_files_paths)
+        send_email(user, stewards_change_sets)
         notified_users << user
       end
     end
@@ -24,8 +24,8 @@ class StewardNotifier
     user.notifications.where(pull_request: @pull_request).exists?
   end
 
-  def send_email(user, stewards_files)
-    UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, stewards_files: stewards_files).deliver_now
+  def send_email(user, steward_change_sets)
+    UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, steward_change_sets: steward_change_sets).deliver_now
   end
 
   def create_notification(users)

@@ -12,7 +12,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         "We made these changes because things needed to be changed and we noticed and we had the means to make the changes, so we did."
                       ),
-                      stewards_files: ['app/stewards.yml', 'lib/closet/stewards.yml'])
+                      steward_change_sets: create_steward_change_sets)
   end
 
   def notify_without_description
@@ -23,6 +23,24 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         nil
                       ),
-                      stewards_files: ['app/stewards.yml', 'lib/closet/stewards.yml'])
+                      steward_change_sets: create_steward_change_sets)
+
+  end
+
+  private
+
+  def create_steward_change_sets
+    [
+      Ladle::StewardsFileChangeSet.new('app/stewards.yml',
+                                [
+                                  Ladle::FileChange.new(:removed, "app/removed_file.rb"),
+                                  Ladle::FileChange.new(:modified, "app/modified_file.rb"),
+                                  Ladle::FileChange.new(:added, "app/new_file.rb"),
+                                ]),
+      Ladle::StewardsFileChangeSet.new('lib/closet/stewards.yml',
+                                [
+                                  Ladle::FileChange.new(:added, "lib/closet/top_shelf/new_file.rb"),
+                                ]),
+    ]
   end
 end

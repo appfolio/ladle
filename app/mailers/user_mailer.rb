@@ -9,9 +9,9 @@ class UserMailer < ApplicationMailer
     end
   end
 
-  def notify(user:, repository:, pull_request:, stewards_files:)
+  def notify(user:, repository:, pull_request:, steward_change_sets:)
     @pull_request = PullRequestPresenter.new(pull_request)
-    @stewards_files = stewards_files
+    @steward_change_sets = steward_change_sets
     @user = user
 
     mail(to:      user.email,
