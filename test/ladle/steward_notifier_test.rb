@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'steward_notifier'
+require 'ladle/steward_notifier'
 
 class StewardNotifierTest < ActionController::TestCase
   setup do
@@ -9,7 +9,7 @@ class StewardNotifierTest < ActionController::TestCase
       'boop'         => create_steward_change_sets
     }
     @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
-    @notifier = StewardNotifier.new('XanderStrike/test', @pull_request)
+    @notifier = Ladle::StewardNotifier.new('XanderStrike/test', @pull_request)
   end
 
   test 'assigns the handler' do

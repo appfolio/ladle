@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'pull_handler'
+require 'ladle/pull_handler'
 
 class PullHandlerTest < ActiveSupport::TestCase
   setup do
@@ -33,7 +33,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
     Rails.stubs(:logger).returns(logger_mock)
 
-    PullHandler.new(@pull_request, mock('notifier')).handle
+    Ladle::PullHandler.new(@pull_request, mock('notifier')).handle
   end
 
   test 'notifies stewards' do
@@ -74,7 +74,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               'bob'               => ['/stewards.yml']
             })
 
-    PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
   test 'notifies old stewards' do
@@ -164,7 +164,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               'hamburglar'        => ['/sub2/stewards.yml']
             })
 
-    PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
   test "directories_in_file_paths" do
@@ -176,7 +176,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       "/",
     ]
 
-    handler     = PullHandler.new(@pull_request, mock('notifier'))
+    handler     = Ladle::PullHandler.new(@pull_request, mock('notifier'))
     directories = handler.send(:directories_in_file_paths,
                                [
                                  "some/really/deep/file.rb",

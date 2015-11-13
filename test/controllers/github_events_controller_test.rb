@@ -4,7 +4,7 @@ class GithubEventsControllerTest < ActionController::TestCase
   test 'should get payload' do
     repository = create_repository
 
-    PullHandler.any_instance.stubs(:handle)
+    Ladle::PullHandler.any_instance.stubs(:handle)
 
     payload = {}.to_json
     signature = repository.compute_webhook_signature(payload)
@@ -57,7 +57,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     handler_mock = mock
     handler_mock.expects(:handle)
 
-    PullHandler.expects(:new).with(
+    Ladle::PullHandler.expects(:new).with(
       all_of(
         is_a(PullRequest),
         responds_with(:number, 5),
@@ -65,7 +65,7 @@ class GithubEventsControllerTest < ActionController::TestCase
         responds_with(:title, 'Hello Dude'),
         responds_with(:body, "We did it!"),
       ),
-      is_a(StewardNotifier)
+      is_a(Ladle::StewardNotifier)
     ).returns(handler_mock)
 
     @controller.expects(:verify_signature)
@@ -93,7 +93,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), repository.webhook_secret, payload)
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
 
-    PullHandler.expects(:new).never
+    Ladle::PullHandler.expects(:new).never
     assert_no_difference('PullRequest.count') do
       post :payload, payload, format: :json, number: 5, pull_request: { state: 'closed' }, repository: { full_name: repository.name }
     end
@@ -109,7 +109,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     handler_mock = mock
     handler_mock.expects(:handle)
 
-    PullHandler.expects(:new).with(pull_request, is_a(StewardNotifier)).returns(handler_mock)
+    Ladle::PullHandler.expects(:new).with(pull_request, is_a(Ladle::StewardNotifier)).returns(handler_mock)
 
     @controller.expects(:verify_signature)
 
