@@ -1,3 +1,5 @@
+require 'ladle/changed_files'
+
 module Ladle
   class PullHandler
     def initialize(pull_request, notifier)
@@ -12,12 +14,14 @@ module Ladle
 
       pr_info = fetch_pr_info(client)
 
-      changed_files = fetch_changed_files(client)
+      pull_request_files = fetch_changed_files(client)
 
       stewards_registry = {}
 
-      read_current_stewards(client, stewards_registry, changed_files.modified, pr_info.head_sha)
-      read_old_stewards(client, stewards_registry, changed_files.modified_stewards_files, pr_info.base_sha)
+      read_current_stewards(client, stewards_registry, pull_request_files, pr_info.head_sha)
+      read_old_stewards(client, stewards_registry, pull_request_files, pr_info.base_sha)
+
+      collect_files(stewards_registry, pull_request_files)
 
       if stewards_registry.empty?
         Rails.logger.info('No stewards found. Doing nothing.')
@@ -36,61 +40,46 @@ module Ladle
       PullRequestInfo.new(pr[:head][:sha], pr[:base][:sha])
     end
 
-    ChangedFiles = Struct.new(:modified, :modified_stewards_files)
-
     def fetch_changed_files(client)
-      changed_files = ChangedFiles.new([], [])
+      changed_files = ChangedFiles.new
 
       client.pull_request_files(@repository.name, @pull_request.number).each do |file|
-        changed_files.modified << file[:filename]
-
-        if file[:filename] =~ /stewards\.yml$/ && ( file[:status] == 'removed' || file[:status] == 'modified' )
-          changed_files.modified_stewards_files << file[:filename]
-        end
+        file_change = Ladle::FileChange.new(file[:status].to_sym, file[:filename])
+        changed_files.add_file_change(file_change)
       end
 
       changed_files
     end
 
-    def read_current_stewards(client, registry, files_changed_in_pull_request, pr_head)
-      directories = directories_in_file_paths(files_changed_in_pull_request)
-      directories.each do |directory|
-        stewards_file_path = File.join(directory, 'stewards.yml')
-
-        register_stewards(client, registry, stewards_file_path, pr_head)
+    def read_current_stewards(client, registry, pull_request_files, pr_head)
+      pull_request_files.directories.each do |directory|
+        register_stewards(client, registry, directory.join('stewards.yml'), pr_head)
       end
     end
 
-    def read_old_stewards(client, registry, modified_stewards_files, parent_head)
-      modified_stewards_files.each do |stewards_file_path|
-        stewards_file_path = File.join("/", stewards_file_path)
-
+    def read_old_stewards(client, registry, pull_request_files, parent_head)
+      pull_request_files.modified_stewards_files.each do |stewards_file_path|
         register_stewards(client, registry, stewards_file_path, parent_head)
       end
     end
 
-    def register_stewards(client, registry, file_path, sha)
-      contents = client.contents(@repository.name, path: file_path, ref: sha)[:content]
+    def register_stewards(client, registry, stewards_file_path, sha)
+      contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
       contents = YAML.load(Base64.decode64(contents))
 
       contents['stewards'].each do |github_username|
         registry[github_username] ||= []
-        registry[github_username] << file_path
+        registry[github_username] << Ladle::StewardsFileChangeset.new(stewards_file_path)
       end
     rescue Octokit::NotFound
     end
 
-    def directories_in_file_paths(file_paths)
-      directories = []
-      file_paths.each do |path|
-        path = Pathname.new("/#{path}")
-        path = path.dirname
-        path.ascend do |path_parent|
-          directories << path_parent.to_s
+    def collect_files(stewards_registry, pull_request_files)
+      stewards_registry.each_value do |changesets|
+        changesets.each do |changeset|
+          changeset.changes.concat(pull_request_files.file_changes_in(changeset.stewards_file.dirname))
         end
       end
-
-      directories.uniq.sort.reverse
     end
   end
 end

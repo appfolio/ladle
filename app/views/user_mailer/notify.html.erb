@@ -13,7 +13,7 @@
   <li>
     <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
     <ul>
-      <% steward_changes.change_set.each do |change| %>
+      <% steward_changes.changes.each do |change| %>
         <li><strong><%= change.status_initial %></strong> <%= change.file %></li>
       <% end %>
     </ul>

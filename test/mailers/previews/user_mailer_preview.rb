@@ -31,13 +31,13 @@ class UserMailerPreview < ActionMailer::Preview
 
   def create_steward_change_sets
     [
-      Ladle::StewardsFileChangeSet.new('app/stewards.yml',
+      Ladle::StewardsFileChangeset.new('app/stewards.yml',
                                 [
                                   Ladle::FileChange.new(:removed, "app/removed_file.rb"),
                                   Ladle::FileChange.new(:modified, "app/modified_file.rb"),
                                   Ladle::FileChange.new(:added, "app/new_file.rb"),
                                 ]),
-      Ladle::StewardsFileChangeSet.new('lib/closet/stewards.yml',
+      Ladle::StewardsFileChangeset.new('lib/closet/stewards.yml',
                                 [
                                   Ladle::FileChange.new(:added, "lib/closet/top_shelf/new_file.rb"),
                                 ]),
