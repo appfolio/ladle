@@ -6,11 +6,18 @@
 <h4>You can view, comment on, or merge this pull request online at:</h4>
 <p>&nbsp;&nbsp;<%= link_to @pull_request.html_url, @pull_request.html_url %></p>
 
-<p>You were notified of this pull request because you are registered as a steward in these files:</p>
+<p>You were notified of this pull request because of the following changes:</p>
 
 <ul>
-<% @stewards_files.each do |file| %>
-  <li><%= file %></li>
+<% @steward_change_sets.each do |steward_changes| %>
+  <li>
+    <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
+    <ul>
+      <% steward_changes.changes.each do |change| %>
+        <li><strong><%= change.status_initial %></strong> <%= change.file %> (<%= change.changes_count %>)</li>
+      <% end %>
+    </ul>
+  </li>
   <% end %>
 </ul>
 

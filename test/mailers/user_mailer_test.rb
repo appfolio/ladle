@@ -13,7 +13,7 @@ class UserMailerTest < ActionMailer::TestCase
                                 nil,
                                 nil
                               ),
-                              stewards_files: ['/stewards.yml', '/bleh/stewards.yml']).deliver_now
+                              steward_change_sets: create_steward_change_sets).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?
 
@@ -32,7 +32,7 @@ class UserMailerTest < ActionMailer::TestCase
                                 'Hey ho!',
                                 'These changes are luminous',
                               ),
-                              stewards_files: ['/stewards.yml', '/bleh/stewards.yml']).deliver_now
+                              steward_change_sets: create_steward_change_sets).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?
 
@@ -40,5 +40,22 @@ class UserMailerTest < ActionMailer::TestCase
     assert_equal ['no-reply@appfolio.com'], email.from
     assert_equal [user.email], email.to
     assert_equal '[XanderStrike/test] Ladle Alert: Hey ho!', email.subject
+  end
+
+  private
+
+  def create_steward_change_sets
+    [
+      Ladle::StewardsFileChangeset.new('app/stewards.yml',
+                                       [
+                                         build(:file_change, status: :removed,  file: "app/removed_file.rb", changes: 0),
+                                         build(:file_change, status: :modified, file: "app/modified_file.rb"),
+                                         build(:file_change, status: :added,    file: "app/new_file.rb", changes: 0, additions: 1),
+                                       ]),
+      Ladle::StewardsFileChangeset.new('lib/closet/stewards.yml',
+                                       [
+                                         build(:file_change, status: :added, file: "lib/closet/top_shelf/new_file.rb", changes: 0, additions: 1),
+                                       ]),
+    ]
   end
 end

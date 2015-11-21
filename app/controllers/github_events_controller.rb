@@ -1,4 +1,4 @@
-require 'pull_handler'
+require 'ladle/pull_handler'
 
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
@@ -20,8 +20,8 @@ class GithubEventsController < ApplicationController
                                          body:     pull_request[:body],
                                        })
 
-      notifier = StewardNotifier.new(@repository.name, pull_request)
-      PullHandler.new(pull_request, notifier).handle
+      notifier = Ladle::StewardNotifier.new(@repository.name, pull_request)
+      Ladle::PullHandler.new(pull_request, notifier).handle
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end

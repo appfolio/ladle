@@ -8,12 +8,16 @@ You can view, comment on, or merge this pull request online at:
 
   <%= @pull_request.html_url %>
 
-You were notified of this pull request because you are registered as a steward in these files:
+You were notified of this pull request because of the following changes:
 
-<% @stewards_files.each do |file| %>
-  * <%= file %>
+<% @steward_change_sets.each do |steward_changes| %>
+  Changes monitored by <%= steward_changes.stewards_file %>:
+
+  <% steward_changes.changes.each do |change| %>
+    * <%= change.status_initial %> <%= change.file %>
+  <% end %>
+
 <% end %>
-
 ---------------------------------------------
 You received this email from Ladle for account <%= @user.github_username %>. Update your notification settings at <%= edit_user_settings_url %>.
 
