@@ -48,13 +48,13 @@ class UserMailerTest < ActionMailer::TestCase
     [
       Ladle::StewardsFileChangeset.new('app/stewards.yml',
                                        [
-                                         Ladle::FileChange.new(:removed, "app/removed_file.rb"),
-                                         Ladle::FileChange.new(:modified, "app/modified_file.rb"),
-                                         Ladle::FileChange.new(:added, "app/new_file.rb"),
+                                         build(:file_change, status: :removed,  file: "app/removed_file.rb", changes: 0),
+                                         build(:file_change, status: :modified, file: "app/modified_file.rb"),
+                                         build(:file_change, status: :added,    file: "app/new_file.rb", changes: 0, additions: 1),
                                        ]),
       Ladle::StewardsFileChangeset.new('lib/closet/stewards.yml',
                                        [
-                                         Ladle::FileChange.new(:added, "lib/closet/top_shelf/new_file.rb"),
+                                         build(:file_change, status: :added, file: "lib/closet/top_shelf/new_file.rb", changes: 0, additions: 1),
                                        ]),
     ]
   end

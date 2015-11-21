@@ -14,7 +14,7 @@
     <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
     <ul>
       <% steward_changes.changes.each do |change| %>
-        <li><strong><%= change.status_initial %></strong> <%= change.file %></li>
+        <li><strong><%= change.status_initial %></strong> <%= change.file %> (<%= change.changes_count %>)</li>
       <% end %>
     </ul>
   </li>

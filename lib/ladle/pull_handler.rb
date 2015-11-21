@@ -44,7 +44,13 @@ module Ladle
       changed_files = ChangedFiles.new
 
       client.pull_request_files(@repository.name, @pull_request.number).each do |file|
-        file_change = Ladle::FileChange.new(file[:status].to_sym, file[:filename])
+        file_change = Ladle::FileChange.new(
+          status:    file[:status].to_sym,
+          file:      file[:filename],
+          additions: file[:additions],
+          deletions: file[:deletions],
+          changes:   file[:changes]
+        )
         changed_files.add_file_change(file_change)
       end
 

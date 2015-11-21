@@ -50,8 +50,20 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
       [
-        {status: "added", filename: 'one.rb'},
-        {status: "modified", filename: 'sub/marine.rb'},
+        {
+          status:    "added",
+          filename:  'one.rb',
+          additions: 1,
+          deletions: 0,
+          changes:   0
+        },
+        {
+          status:    "modified",
+          filename:  'sub/marine.rb',
+          additions: 0,
+          deletions: 0,
+          changes:   1
+        },
       ])
 
     stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'branch_head')
@@ -66,18 +78,26 @@ class PullHandlerTest < ActiveSupport::TestCase
         - bob
     YAML
 
+    expected_stewards_changeset = Ladle::StewardsFileChangeset.new('stewards.yml', [
+                                                                   build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                 ])
+
+    expected_sub_stewards_changeset = Ladle::StewardsFileChangeset.new('sub/stewards.yml', [
+                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                         ])
     notifier = mock
     notifier.expects(:notify)
       .with({
               'xanderstrike'      => [
-                create_changeset('sub/stewards.yml', [:modified, 'sub/marine.rb']),
-                create_changeset('stewards.yml',     [:added, 'one.rb'], [:modified, 'sub/marine.rb']),
+                expected_sub_stewards_changeset,
+                expected_stewards_changeset
               ],
               'fadsfadsfadsfadsf' => [
-                create_changeset('sub/stewards.yml', [:modified, 'sub/marine.rb'])
+                expected_sub_stewards_changeset
               ],
               'bob'               => [
-                create_changeset('stewards.yml',     [:added, 'one.rb'], [:modified, 'sub/marine.rb']),
+                expected_stewards_changeset
               ]
             })
 
@@ -100,27 +120,45 @@ class PullHandlerTest < ActiveSupport::TestCase
       [
         {
           status: 'removed',
-          filename: 'stewards.yml'
+          filename: 'stewards.yml',
+          additions: 0,
+          deletions: 1,
+          changes:   0
         },
         {
-          status: "added",
-          filename: 'one.rb'
+          status:    "added",
+          filename:  'one.rb',
+          additions: 1,
+          deletions: 0,
+          changes:   0
         },
         {
           status: "modified",
-          filename: 'sub/marine.rb'
+          filename: 'sub/marine.rb',
+          additions: 0,
+          deletions: 0,
+          changes:   1
         },
         {
           status: "modified",
-          filename: 'sub/stewards.yml'
+          filename: 'sub/stewards.yml',
+          additions: 0,
+          deletions: 0,
+          changes:   1
         },
         {
           status: "removed",
-          filename: 'sub2/sandwich'
+          filename: 'sub2/sandwich',
+          additions: 0,
+          deletions: 1,
+          changes:   0
         },
         {
           status: "removed",
-          filename: 'sub3/stewards.yml'
+          filename: 'sub3/stewards.yml',
+          additions: 0,
+          deletions: 1,
+          changes:   0
         },
       ])
 
@@ -160,40 +198,42 @@ class PullHandlerTest < ActiveSupport::TestCase
         - bob
     YAML
 
+    expected_stewards_changeset = Ladle::StewardsFileChangeset.new('stewards.yml', [
+                                                                   build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
+                                                                   build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/stewards.yml', changes: 1),
+                                                                   build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
+                                                                   build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
+                                                                 ])
+
+    expected_sub_stewards_changeset = Ladle::StewardsFileChangeset.new('sub/stewards.yml', [
+                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                           build(:file_change, status: :modified, file: 'sub/stewards.yml', changes: 1)
+                                                                         ])
+
+    expected_sub3_stewards_changeset = Ladle::StewardsFileChangeset.new('sub3/stewards.yml', [build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)])
+
     notifier = mock
     notifier.expects(:notify)
       .with({
               'xanderstrike'      => [
-                create_changeset('sub/stewards.yml', [:modified, 'sub/marine.rb'], [:modified, 'sub/stewards.yml']),
-                create_changeset('stewards.yml',
-                                 [:removed, 'stewards.yml'],
-                                 [:added, 'one.rb'],
-                                 [:modified, 'sub/marine.rb'],
-                                 [:modified, 'sub/stewards.yml'],
-                                 [:removed, 'sub2/sandwich'],
-                                 [:removed, 'sub3/stewards.yml']
-                ),
-                create_changeset('sub3/stewards.yml', [:removed, 'sub3/stewards.yml']),
+                expected_sub_stewards_changeset,
+                expected_stewards_changeset,
+                expected_sub3_stewards_changeset,
               ],
               'fadsfadsfadsfadsf' => [
-                create_changeset('sub/stewards.yml', [:modified, 'sub/marine.rb'], [:modified, 'sub/stewards.yml']),
+                expected_sub_stewards_changeset
               ],
               'bob'               => [
-                create_changeset('stewards.yml',
-                                 [:removed, 'stewards.yml'],
-                                 [:added, 'one.rb'],
-                                 [:modified, 'sub/marine.rb'],
-                                 [:modified, 'sub/stewards.yml'],
-                                 [:removed, 'sub2/sandwich'],
-                                 [:removed, 'sub3/stewards.yml']
-                ),
-                create_changeset('sub3/stewards.yml', [:removed, 'sub3/stewards.yml'])
+                expected_stewards_changeset,
+                expected_sub3_stewards_changeset
               ],
               'jeb'               => [
-                create_changeset('sub/stewards.yml', [:modified, 'sub/marine.rb'], [:modified, 'sub/stewards.yml']),
+                expected_sub_stewards_changeset
               ],
               'hamburglar'        => [
-                create_changeset('sub2/stewards.yml', [:removed, 'sub2/sandwich'],)
+                Ladle::StewardsFileChangeset.new('sub2/stewards.yml', [build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1)])
               ],
             })
 
@@ -203,30 +243,32 @@ class PullHandlerTest < ActiveSupport::TestCase
   test "collect_files" do
     registry = {
       'xanderstrike' => [
-        create_changeset('stewards.yml'),
-        create_changeset('sub/stewards.yml'),
-        create_changeset('sub3/stewards.yml')
+        Ladle::StewardsFileChangeset.new('stewards.yml', []),
+        Ladle::StewardsFileChangeset.new('sub/stewards.yml', []),
+        Ladle::StewardsFileChangeset.new('sub3/stewards.yml', [])
       ]
     }
 
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml'))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml'))
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich'))
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml'))
+    changed_files.add_file_change(build(:file_change, file: 'stewards.yml'))
+    changed_files.add_file_change(build(:file_change, file: 'one.rb'))
+    changed_files.add_file_change(build(:file_change, file: 'sub/marine.rb'))
+    changed_files.add_file_change(build(:file_change, file: 'sub/stewards.yml'))
+    changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
+    changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
 
     handler = Ladle::PullHandler.new(@pull_request, mock('notifier'))
     handler.send(:collect_files, registry, changed_files)
 
-    expected_changeset = create_changeset('stewards.yml',
-                                          [:removed, 'stewards.yml'],
-                                          [:added, 'one.rb'],
-                                          [:modified, 'sub/marine.rb'],
-                                          [:modified, 'sub/stewards.yml'],
-                                          [:removed, 'sub2/sandwich'],
-                                          [:removed, 'sub3/stewards.yml']
+    expected_changeset = Ladle::StewardsFileChangeset.new('stewards.yml',
+                                          [
+                                            build(:file_change, file: 'stewards.yml'),
+                                            build(:file_change, file: 'one.rb'),
+                                            build(:file_change, file: 'sub/marine.rb'),
+                                            build(:file_change, file: 'sub/stewards.yml'),
+                                            build(:file_change, file: 'sub2/sandwich'),
+                                            build(:file_change, file: 'sub3/stewards.yml')
+                                          ]
     )
 
     assert_equal expected_changeset, registry['xanderstrike'].first
@@ -238,12 +280,5 @@ class PullHandlerTest < ActiveSupport::TestCase
     client.expects(:contents)
       .with(@repository.name, path: path, ref: ref)
       .returns(content: Base64.encode64(contents))
-  end
-
-  def create_changeset(stewards_file, *change_pairs)
-    Ladle::StewardsFileChangeset.new(stewards_file,
-                                     change_pairs.map { |status, file|
-                                       build(:file_change, status: status, file: Pathname.new(file))
-                                     })
   end
 end

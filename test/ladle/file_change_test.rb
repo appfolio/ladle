@@ -25,6 +25,11 @@ class FileChangeTest < ActiveSupport::TestCase
     assert_equal "A", file_change.status_initial
   end
 
+  test 'changes_count' do
+    file_change = build(:file_change, additions: 1, deletions: 2, changes: 3)
+    assert_equal 6, file_change.changes_count
+  end
+
   test 'invalid' do
     raised = assert_raises ArgumentError do
       build(:file_change, status: :hey)

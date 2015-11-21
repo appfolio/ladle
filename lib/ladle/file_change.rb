@@ -5,13 +5,20 @@ module Ladle
       modified: "M",
       added: "A"
     }
-    attr_reader :status, :file
+    attr_reader :status, :file, :additions, :deletions, :changes
 
-    def initialize(status, file)
-      @status = status
-      @file = Pathname.new(file)
+    def initialize(status:, file:, additions:, deletions:, changes:)
+      @status    = status
+      @file      = Pathname.new(file)
+      @additions = additions
+      @deletions = deletions
+      @changes   = changes
 
       raise ArgumentError, "Invalid status: '#{@status}'" unless STATUS_INITIALS.keys.include?(@status)
+    end
+
+    def changes_count
+      @additions + @deletions + @changes
     end
 
     def status_initial
@@ -19,11 +26,15 @@ module Ladle
     end
 
     def ==(other)
-      @status == other.status && @file == other.file
+      @status == other.status       &&
+      @file == other.file           &&
+      @additions == other.additions &&
+      @deletions == other.deletions &&
+      @changes == other.changes
     end
 
     def hash
-      [@status, @file].hash
+      [@status, @file, @additions, @deletions, @changes].hash
     end
 
     alias eql? ==
