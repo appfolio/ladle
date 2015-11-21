@@ -1,4 +1,5 @@
 require 'ladle/pull_handler'
+require 'ladle/steward_notifier'
 
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
