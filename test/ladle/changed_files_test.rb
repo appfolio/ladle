@@ -14,7 +14,7 @@ class ChangedFilesTest < ActiveSupport::TestCase
   test 'add some changes' do
     changed_files = Ladle::ChangedFiles.new
 
-    change1 = Ladle::FileChange.new(:added, "bob/loblaw/law.blog")
+    change1 = build(:file_change, file: "bob/loblaw/law.blog")
     changed_files.add_file_change(change1)
     assert_equal [Pathname.new('bob/loblaw')], changed_files.directories
     assert_equal [], changed_files.modified_stewards_files
@@ -28,13 +28,13 @@ class ChangedFilesTest < ActiveSupport::TestCase
     assert_equal [], changed_files.file_changes_in(Pathname.new("bob/loblaw/inlaw"))
     assert_equal [], changed_files.file_changes_in(Pathname.new("bob2"))
 
-    change2 = Ladle::FileChange.new(:added, "bob/loblaw/law2.blog")
+    change2 = build(:file_change, file: "bob/loblaw/law2.blog")
     changed_files.add_file_change(change2)
 
-    change3 = Ladle::FileChange.new(:added, "bob_rob/inlaw/law.blog")
+    change3 = build(:file_change, file: "bob_rob/inlaw/law.blog")
     changed_files.add_file_change(change3)
 
-    change4 = Ladle::FileChange.new(:added, "law.blog")
+    change4 = build(:file_change, file: "law.blog")
     changed_files.add_file_change(change4)
 
     assert_equal [change1, change2], changed_files.file_changes_in(Pathname.new("bob/loblaw"))
@@ -45,11 +45,11 @@ class ChangedFilesTest < ActiveSupport::TestCase
   test 'directories' do
     changed_files = Ladle::ChangedFiles.new
 
-    changed_files.add_file_change(Ladle::FileChange.new(:added, "bob/loblaw/law.blog"))
-    changed_files.add_file_change(Ladle::FileChange.new(:added, "bob/loblaw/law2.blog"))
-    changed_files.add_file_change(Ladle::FileChange.new(:added, "bob_rob/inlaw/law.blog"))
-    changed_files.add_file_change(Ladle::FileChange.new(:added, "loblaw/law.blog"))
-    changed_files.add_file_change(Ladle::FileChange.new(:added, "law.blog"))
+    changed_files.add_file_change(build(:file_change, file: "bob/loblaw/law.blog"))
+    changed_files.add_file_change(build(:file_change, file: "bob/loblaw/law2.blog"))
+    changed_files.add_file_change(build(:file_change, file: "bob_rob/inlaw/law.blog"))
+    changed_files.add_file_change(build(:file_change, file: "loblaw/law.blog"))
+    changed_files.add_file_change(build(:file_change, file: "law.blog"))
 
     expected = [
       Pathname.new('loblaw'),

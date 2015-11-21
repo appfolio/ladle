@@ -210,12 +210,12 @@ class PullHandlerTest < ActiveSupport::TestCase
     }
 
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(Ladle::FileChange.new(:removed, 'stewards.yml'))
-    changed_files.add_file_change(Ladle::FileChange.new(:added, 'one.rb'))
-    changed_files.add_file_change(Ladle::FileChange.new(:modified, 'sub/marine.rb'))
-    changed_files.add_file_change(Ladle::FileChange.new(:modified, 'sub/stewards.yml'))
-    changed_files.add_file_change(Ladle::FileChange.new(:removed, 'sub2/sandwich'))
-    changed_files.add_file_change(Ladle::FileChange.new(:removed, 'sub3/stewards.yml'))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml'))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml'))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich'))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml'))
 
     handler = Ladle::PullHandler.new(@pull_request, mock('notifier'))
     handler.send(:collect_files, registry, changed_files)
@@ -243,7 +243,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   def create_changeset(stewards_file, *change_pairs)
     Ladle::StewardsFileChangeset.new(stewards_file,
                                      change_pairs.map { |status, file|
-                                       Ladle::FileChange.new(status, Pathname.new(file))
+                                       build(:file_change, status: status, file: Pathname.new(file))
                                      })
   end
 end
