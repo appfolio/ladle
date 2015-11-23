@@ -18,7 +18,14 @@ module Ladle
     end
 
     def changes_count
-      @additions + @deletions + @changes
+      case status
+      when :removed
+        @deletions
+      when :added
+        @additions
+      when :modified
+        @additions + @deletions + @changes
+      end
     end
 
     def status_initial
