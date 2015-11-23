@@ -55,14 +55,12 @@ class PullHandlerTest < ActiveSupport::TestCase
           filename:  'one.rb',
           additions: 1,
           deletions: 0,
-          changes:   0
         },
         {
           status:    "modified",
           filename:  'sub/marine.rb',
-          additions: 0,
-          deletions: 0,
-          changes:   1
+          additions: 1,
+          deletions: 1,
         },
       ])
 
@@ -80,11 +78,11 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     expected_stewards_changeset = Ladle::StewardsFileChangeset.new('stewards.yml', [
                                                                    build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
                                                                  ])
 
     expected_sub_stewards_changeset = Ladle::StewardsFileChangeset.new('sub/stewards.yml', [
-                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
+                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
                                                                          ])
     notifier = mock
     notifier.expects(:notify)
@@ -123,42 +121,36 @@ class PullHandlerTest < ActiveSupport::TestCase
           filename: 'stewards.yml',
           additions: 0,
           deletions: 1,
-          changes:   0
         },
         {
           status:    "added",
           filename:  'one.rb',
           additions: 1,
           deletions: 0,
-          changes:   0
         },
         {
           status: "modified",
           filename: 'sub/marine.rb',
-          additions: 0,
+          additions: 1,
           deletions: 0,
-          changes:   1
         },
         {
           status: "modified",
           filename: 'sub/stewards.yml',
-          additions: 0,
+          additions: 1,
           deletions: 0,
-          changes:   1
         },
         {
           status: "removed",
           filename: 'sub2/sandwich',
           additions: 0,
           deletions: 1,
-          changes:   0
         },
         {
           status: "removed",
           filename: 'sub3/stewards.yml',
           additions: 0,
           deletions: 1,
-          changes:   0
         },
       ])
 
@@ -201,15 +193,15 @@ class PullHandlerTest < ActiveSupport::TestCase
     expected_stewards_changeset = Ladle::StewardsFileChangeset.new('stewards.yml', [
                                                                    build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
                                                                    build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
-                                                                   build(:file_change, status: :modified, file: 'sub/stewards.yml', changes: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
+                                                                   build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
                                                                    build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
                                                                    build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
                                                                  ])
 
     expected_sub_stewards_changeset = Ladle::StewardsFileChangeset.new('sub/stewards.yml', [
-                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', changes: 1),
-                                                                           build(:file_change, status: :modified, file: 'sub/stewards.yml', changes: 1)
+                                                                           build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
+                                                                           build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1)
                                                                          ])
 
     expected_sub3_stewards_changeset = Ladle::StewardsFileChangeset.new('sub3/stewards.yml', [build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)])
@@ -259,21 +251,18 @@ class PullHandlerTest < ActiveSupport::TestCase
           filename: 'goodbye/kitty/sianara.txt',
           additions: 1,
           deletions: 0,
-          changes:   0
         },
         {
           status:    "added",
           filename:  'hello/kitty/what/che.txt',
           additions: 1,
           deletions: 0,
-          changes:   0
         },
         {
           status:    "removed",
           filename: 'hello/kitty/what/is/stewards.yml',
           additions: 0,
           deletions: 1,
-          changes:   0
         }
       ])
 

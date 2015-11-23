@@ -48,8 +48,7 @@ module Ladle
           status:    file[:status].to_sym,
           file:      file[:filename],
           additions: file[:additions],
-          deletions: file[:deletions],
-          changes:   file[:changes]
+          deletions: file[:deletions]
         )
         changed_files.add_file_change(file_change)
       end

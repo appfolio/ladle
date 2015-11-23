@@ -32,7 +32,7 @@ class FileChangeTest < ActiveSupport::TestCase
     file_change = build(:file_change, status: :removed, deletions: 6)
     assert_equal 6, file_change.changes_count
 
-    file_change = build(:file_change, status: :modified, additions: 1, deletions: 2, changes: 3)
+    file_change = build(:file_change, status: :modified, additions: 3, deletions: 3)
     assert_equal 6, file_change.changes_count
   end
 
