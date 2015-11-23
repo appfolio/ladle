@@ -47,6 +47,11 @@ module Ladle
       if file_change.file.to_s =~ /stewards\.yml$/ && file_change.status != :added
         @modified_stewards_files << file_change.file
       end
+
+      # add all other directories for this file
+      file_change.file.ascend do |file|
+        @directories[file.dirname] ||= Directory.new(file.dirname)
+      end
     end
 
     private
