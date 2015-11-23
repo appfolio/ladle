@@ -14,7 +14,7 @@ You were notified of this pull request because of the following changes:
   Changes monitored by <%= steward_changes.stewards_file %>:
 
   <% steward_changes.changes.each do |change| %>
-    * <%= change.status_initial %> <%= change.file %>
+    * <%= change.status_initial %> <%= change.file %> (<%= change.changes_count %>)
   <% end %>
 
 <% end %>
