@@ -35,7 +35,7 @@ class UserMailerPreview < ActionMailer::Preview
       Ladle::StewardsFileChangeset.new('app/stewards.yml',
                                        [
                                          build(:file_change, status: :removed,  file: "app/removed_file.rb", deletions: 6),
-                                         build(:file_change, status: :modified, file: "app/modified_file.rb", changes: 1, deletions: 2, additions: 3),
+                                         build(:file_change, status: :modified, file: "app/modified_file.rb", deletions: 3, additions: 3),
                                          build(:file_change, status: :added,    file: "app/new_file.rb", additions: 6),
                                        ]),
       Ladle::StewardsFileChangeset.new('lib/closet/stewards.yml',
