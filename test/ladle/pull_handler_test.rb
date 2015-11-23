@@ -240,6 +240,103 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
+  test 'notify - stewards file not in changeset' do
+    client = Octokit::Client.any_instance
+    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
+      {
+        head: {
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
+        }
+      })
+
+    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
+      [
+        {
+          status:   'added',
+          filename: 'goodbye/kitty/sianara.txt',
+          additions: 1,
+          deletions: 0,
+          changes:   0
+        },
+        {
+          status:    "added",
+          filename:  'hello/kitty/what/che.txt',
+          additions: 1,
+          deletions: 0,
+          changes:   0
+        },
+        {
+          status:    "removed",
+          filename: 'hello/kitty/what/is/stewards.yml',
+          additions: 0,
+          deletions: 1,
+          changes:   0
+        }
+      ])
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'goodbye/kitty/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'goodbye/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/what/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
+      stewards:
+        - xanderstrike
+    YAML
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'hello/kitty/what/is/stewards.yml', ref: 'parent_head')
+      stewards:
+        - xanderstrike
+        - bleh
+    YAML
+
+    expected_stewards_changeset = Ladle::StewardsFileChangeset.new('hello/stewards.yml', [
+                                                                                   build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
+                                                                                   build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
+                                                                                 ])
+
+    expected_sub_stewards_changeset = Ladle::StewardsFileChangeset.new('hello/kitty/what/is/stewards.yml', [
+                                                                                           build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
+                                                                                         ])
+
+    notifier = mock
+    notifier.stubs(:id).returns(1)
+    notifier.expects(:notify)
+      .with({
+              'xanderstrike' => [
+                expected_stewards_changeset,
+                expected_sub_stewards_changeset,
+              ],
+              'bleh'        => [
+                expected_sub_stewards_changeset
+              ],
+            })
+
+    Ladle::PullHandler.new(@pull_request, notifier).handle
+  end
+
   test "collect_files" do
     registry = {
       'xanderstrike' => [
