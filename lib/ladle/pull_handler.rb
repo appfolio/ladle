@@ -1,4 +1,5 @@
 require 'ladle/changed_files'
+require 'ladle/stewards_file'
 
 module Ladle
   class PullHandler
@@ -70,11 +71,11 @@ module Ladle
 
     def register_stewards(client, registry, stewards_file_path, sha)
       contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
-      contents = YAML.load(Base64.decode64(contents))
+      stewards_file = StewardsFile.parse(Base64.decode64(contents))
 
-      contents['stewards'].each do |github_username|
-        registry[github_username] ||= []
-        registry[github_username] << Ladle::StewardsFileChangeset.new(stewards_file_path)
+      stewards_file.stewards.each do |steward|
+        registry[steward.github_username] ||= []
+        registry[steward.github_username] << Ladle::StewardsFileChangeset.new(stewards_file_path)
       end
     rescue Octokit::NotFound
     end
