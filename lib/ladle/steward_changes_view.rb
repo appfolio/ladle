@@ -1,9 +1,11 @@
+require 'ladle/file_filter'
+
 module Ladle
   class StewardChangesView
     attr_reader :stewards_file, :file_filter, :changes
 
-    def initialize(stewards_file, file_filter, changes = nil)
-      @file_filter   = file_filter
+    def initialize(stewards_file:, file_filter: nil, changes: nil)
+      @file_filter   = file_filter || FileFilter.new
       @stewards_file = Pathname.new(stewards_file)
       @changes       = changes || []
     end
