@@ -35,8 +35,7 @@ class StewardsFileTest < ActiveSupport::TestCase
          include:
            - "**/bleh"
            - "**/whatever"
-         exclude:
-           - "**/bleh/*.rb"
+         exclude: "**/bleh/*.rb"
        - bob
     YAML
 

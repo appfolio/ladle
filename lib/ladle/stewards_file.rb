@@ -7,8 +7,8 @@ module Ladle
 
       def initialize(github_username:, include_patterns: nil, exclude_patterns: nil)
         @github_username = github_username
-        @include_patterns = include_patterns || []
-        @exclude_patterns = exclude_patterns || []
+        @include_patterns = Array.wrap(include_patterns || [])
+        @exclude_patterns = Array.wrap(exclude_patterns || [])
       end
 
       def ==(other)
