@@ -74,9 +74,9 @@ module Ladle
       contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
       stewards_file = StewardsFile.parse(Base64.decode64(contents))
 
-      stewards_file.stewards.each do |steward|
-        registry[steward.github_username] ||= StewardView.new
-        registry[steward.github_username].add_change_view(Ladle::StewardChangesView.new(stewards_file_path))
+      stewards_file.stewards.each do |steward_config|
+        registry[steward_config.github_username] ||= StewardView.new
+        registry[steward_config.github_username].add_change_view(Ladle::StewardChangesView.new(stewards_file_path, steward_config.file_filter))
       end
     rescue Octokit::NotFound
     end
