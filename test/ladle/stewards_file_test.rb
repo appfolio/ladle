@@ -1,5 +1,6 @@
 require 'test_helper'
 require 'ladle/stewards_file'
+require 'ladle/steward_config'
 
 class StewardsFileTest < ActiveSupport::TestCase
 
@@ -21,8 +22,8 @@ class StewardsFileTest < ActiveSupport::TestCase
     stewards_file = Ladle::StewardsFile.parse(content)
 
     expected_stewards = [
-      Ladle::StewardsFile::Steward.new(github_username: "xanderstrike"),
-      Ladle::StewardsFile::Steward.new(github_username: "bob"),
+      Ladle::StewardConfig.new(github_username: "xanderstrike"),
+      Ladle::StewardConfig.new(github_username: "bob"),
     ]
 
     assert_equal expected_stewards, stewards_file.stewards
@@ -42,8 +43,8 @@ class StewardsFileTest < ActiveSupport::TestCase
     stewards_file = Ladle::StewardsFile.parse(content)
 
     expected_stewards = [
-      Ladle::StewardsFile::Steward.new(github_username: "xanderstrike", include_patterns: ["**/bleh", "**/whatever"], exclude_patterns: ["**/bleh/*.rb"]),
-      Ladle::StewardsFile::Steward.new(github_username: "bob"),
+      Ladle::StewardConfig.new(github_username: "xanderstrike", include_patterns: ["**/bleh", "**/whatever"], exclude_patterns: ["**/bleh/*.rb"]),
+      Ladle::StewardConfig.new(github_username: "bob"),
     ]
 
     assert_equal expected_stewards, stewards_file.stewards
