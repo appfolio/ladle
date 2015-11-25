@@ -76,15 +76,16 @@ module Ladle
 
       stewards_file.stewards.each do |steward|
         registry[steward.github_username] ||= StewardView.new
-        registry[steward.github_username].add_changeset(Ladle::StewardsFileChangeset.new(stewards_file_path))
+        registry[steward.github_username].add_change_view(Ladle::StewardChangesView.new(stewards_file_path))
       end
     rescue Octokit::NotFound
     end
 
     def collect_files(stewards_registry, pull_request_files)
       stewards_registry.each_value do |steward_view|
-        steward_view.changesets.each do |changeset|
-          changeset.changes.concat(pull_request_files.file_changes_in(changeset.stewards_file.dirname))
+        steward_view.change_views.each do |change_view|
+          file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
+          change_view.add_file_changes(file_changes)
         end
       end
     end

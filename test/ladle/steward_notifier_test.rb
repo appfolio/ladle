@@ -3,10 +3,10 @@ require 'ladle/steward_notifier'
 
 class StewardNotifierTest < ActionController::TestCase
   setup do
-    @stewards_change_sets = {
-      'xanderstrike' => create_steward_change_sets,
-      'counterstrike'=> create_steward_change_sets,
-      'boop'         => create_steward_change_sets
+    @steward_changes_views = {
+      'xanderstrike' => create_steward_changes_views,
+      'counterstrike'=> create_steward_changes_views,
+      'boop'         => create_steward_changes_views
     }
     @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
     @notifier = Ladle::StewardNotifier.new('XanderStrike/test', @pull_request)
@@ -18,9 +18,9 @@ class StewardNotifierTest < ActionController::TestCase
 
   test 'notify' do
     user = create(:user, github_username: 'xanderstrike')
-    @notifier.expects(:send_email).with(user, @stewards_change_sets['xanderstrike'])
+    @notifier.expects(:send_email).with(user, @steward_changes_views['xanderstrike'])
     @notifier.expects(:create_notification).with([user])
-    @notifier.notify(@stewards_change_sets)
+    @notifier.notify(@steward_changes_views)
   end
 
   test 'notify - error records notifications for non errored notifications' do
@@ -34,7 +34,7 @@ class StewardNotifierTest < ActionController::TestCase
     @notifier.expects(:create_notification).with([user1])
 
     raised = assert_raises(error.class) do
-      @notifier.notify(@stewards_change_sets)
+      @notifier.notify(@steward_changes_views)
     end
 
     assert_equal error, raised
@@ -48,16 +48,16 @@ class StewardNotifierTest < ActionController::TestCase
     notification.notified_users << notified_user
     notification.save!
 
-    @notifier.expects(:send_email).with(user, @stewards_change_sets['xanderstrike'])
+    @notifier.expects(:send_email).with(user, @steward_changes_views['xanderstrike'])
     @notifier.expects(:create_notification).with([user])
-    @notifier.notify(@stewards_change_sets)
+    @notifier.notify(@steward_changes_views)
   end
 
   test 'send_email uses UserMailer' do
     ActionMailer::Base.deliveries.clear
     user = create(:user, email: 'hello@kitty.com')
 
-    @notifier.send(:send_email, user, @stewards_change_sets['xanderstrike'])
+    @notifier.send(:send_email, user, @steward_changes_views['xanderstrike'])
 
     notify_email = ActionMailer::Base.deliveries.last
 
@@ -89,15 +89,15 @@ class StewardNotifierTest < ActionController::TestCase
 
   private
 
-  def create_steward_change_sets
+  def create_steward_changes_views
     [
-      Ladle::StewardsFileChangeset.new('app/stewards.yml',
+      Ladle::StewardChangesView.new('app/stewards.yml',
                                        [
                                          build(:file_change, status: :removed,  file: "app/removed_file.rb", deletions: 6),
                                          build(:file_change, status: :modified, file: "app/modified_file.rb", deletions: 3, additions: 3),
                                          build(:file_change, status: :added,    file: "app/new_file.rb", additions: 6),
                                        ]),
-      Ladle::StewardsFileChangeset.new('lib/closet/stewards.yml',
+      Ladle::StewardChangesView.new('lib/closet/stewards.yml',
                                        [
                                          build(:file_change, status: :added, file: "lib/closet/top_shelf/new_file.rb", additions: 6),
                                        ]),

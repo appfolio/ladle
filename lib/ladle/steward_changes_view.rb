@@ -1,10 +1,14 @@
 module Ladle
-  class StewardsFileChangeset
+  class StewardChangesView
     attr_reader :stewards_file, :changes
 
     def initialize(stewards_file, changes = nil)
       @stewards_file = Pathname.new(stewards_file)
       @changes       = changes || []
+    end
+
+    def add_file_changes(file_changes)
+      @changes.concat(file_changes)
     end
 
     def ==(other)

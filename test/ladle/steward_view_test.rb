@@ -4,7 +4,7 @@ require 'ladle/steward_view'
 class StewardViewTest < ActiveSupport::TestCase
 
   test 'value object' do
-    changeset = Ladle::StewardsFileChangeset.new('stewards.yml',
+    change_view = Ladle::StewardChangesView.new('stewards.yml',
                                                  [
                                                    build(:file_change, file: 'stewards.yml'),
                                                    build(:file_change, file: 'one.rb'),
@@ -16,10 +16,10 @@ class StewardViewTest < ActiveSupport::TestCase
     )
 
     view1 = Ladle::StewardView.new
-    view1.add_changeset(changeset)
+    view1.add_change_view(change_view)
 
     view2 = Ladle::StewardView.new
-    view2.add_changeset(changeset.dup)
+    view2.add_change_view(change_view.dup)
 
     assert_equal view1, view2
   end

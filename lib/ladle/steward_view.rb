@@ -1,23 +1,23 @@
 module Ladle
   class StewardView
-    attr_reader :changesets
+    attr_reader :change_views
 
-    def initialize(changesets = [])
-      @changesets = changesets
+    def initialize(change_views = [])
+      @change_views = change_views
     end
 
-    def add_changeset(changeset)
-      @changesets << changeset
+    def add_change_view(change_view)
+      @change_views << change_view
     end
 
     def ==(other)
-      @changesets == other.changesets
+      @change_views == other.change_views
     end
 
     alias eql? ==
 
     def hash
-      @changesets.hash
+      change_views.hash
     end
   end
 end
