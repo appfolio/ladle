@@ -96,14 +96,14 @@ class PullHandlerTest < ActiveSupport::TestCase
     notifier = mock
     notifier.expects(:notify)
       .with({
-              'xanderstrike'      => Ladle::StewardView.new([
+              'xanderstrike'      => [
                 expected_sub_stewards_changes_view,
                 expected_stewards_changes_view
-              ]),
-              'fadsfadsfadsfadsf' => Ladle::StewardView.new([
+              ],
+              'fadsfadsfadsfadsf' => [
                 expected_sub_stewards_changes_view
-              ]),
-              'bob'               => Ladle::StewardView.new([
+              ],
+              'bob'               => [
                 build(:steward_changes_view,
                       stewards_file: 'stewards.yml',
                       file_filter: Ladle::FileFilter.new(
@@ -114,7 +114,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                        build(:file_change, status: :added, file: 'one.rb', additions: 1),
                                        build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
                                      ])
-              ])
+              ]
             })
 
     Ladle::PullHandler.new(@pull_request, notifier).handle
@@ -235,24 +235,24 @@ class PullHandlerTest < ActiveSupport::TestCase
     notifier = mock
     notifier.expects(:notify)
       .with({
-              'xanderstrike'      => Ladle::StewardView.new([
+              'xanderstrike'      => [
                 expected_sub_stewards_changes_view,
                 expected_stewards_changes_view,
                 expected_sub3_stewards_changes_view,
-              ]),
-              'fadsfadsfadsfadsf' => Ladle::StewardView.new([
+              ],
+              'fadsfadsfadsfadsf' => [
                 expected_sub_stewards_changes_view
-              ]),
-              'bob'               => Ladle::StewardView.new([
+              ],
+              'bob'               => [
                 expected_stewards_changes_view,
                 expected_sub3_stewards_changes_view
-              ]),
-              'jeb'               => Ladle::StewardView.new([
+              ],
+              'jeb'               => [
                 expected_sub_stewards_changes_view
-              ]),
-              'hamburglar'        => Ladle::StewardView.new([
+              ],
+              'hamburglar'        => [
                 build(:steward_changes_view, stewards_file: 'sub2/stewards.yml', changes: [build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1)])
-              ]),
+              ],
             })
 
     Ladle::PullHandler.new(@pull_request, notifier).handle
@@ -344,13 +344,13 @@ class PullHandlerTest < ActiveSupport::TestCase
     notifier.stubs(:id).returns(1)
     notifier.expects(:notify)
       .with({
-              'xanderstrike' => Ladle::StewardView.new([
+              'xanderstrike' => [
                 expected_stewards_changes_view,
                 expected_sub_stewards_changes_view,
-              ]),
-              'bleh'        => Ladle::StewardView.new([
+              ],
+              'bleh'        => [
                 expected_sub_stewards_changes_view
-              ]),
+              ],
             })
 
     Ladle::PullHandler.new(@pull_request, notifier).handle
@@ -358,11 +358,11 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test "collect_files" do
     registry = {
-      'xanderstrike' => Ladle::StewardView.new([
-                                                 build(:steward_changes_view, stewards_file: 'stewards.yml'),
-                                                 build(:steward_changes_view, stewards_file: 'sub/stewards.yml'),
-                                                 build(:steward_changes_view, stewards_file: 'sub3/stewards.yml'),
-                                               ])
+      'xanderstrike' => [
+        build(:steward_changes_view, stewards_file: 'stewards.yml'),
+        build(:steward_changes_view, stewards_file: 'sub/stewards.yml'),
+        build(:steward_changes_view, stewards_file: 'sub3/stewards.yml'),
+      ]
     }
 
     changed_files = Ladle::ChangedFiles.new
@@ -387,7 +387,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                        build(:file_change, file: 'sub3/stewards.yml')
                      ])
 
-    assert_equal expected_changes_view, registry['xanderstrike'].change_views.first
+    assert_equal expected_changes_view, registry['xanderstrike'].first
   end
 
   private
