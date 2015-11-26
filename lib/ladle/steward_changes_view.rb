@@ -11,7 +11,11 @@ module Ladle
     end
 
     def add_file_changes(file_changes)
-      @changes.concat(file_changes)
+      file_changes.each do |file_change|
+        if @file_filter.include?(file_change.file)
+          @changes << file_change
+        end
+      end
     end
 
     def ==(other)
