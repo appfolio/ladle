@@ -2,6 +2,7 @@ require 'test_helper'
 require 'ladle/pull_handler'
 require 'ladle/steward_config'
 require 'ladle/changed_files'
+require 'ladle/file_filter'
 
 class PullHandlerTest < ActiveSupport::TestCase
   setup do
@@ -74,8 +75,10 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     stub_stewards_file_contents(client, <<-YAML, path: 'stewards.yml', ref: 'branch_head')
       stewards:
+        - github_username: bob
+          include: "**.rb"
+          exclude: "**.txt"
         - xanderstrike
-        - bob
     YAML
 
     expected_stewards_changes_view = build(:steward_changes_view,
@@ -101,7 +104,16 @@ class PullHandlerTest < ActiveSupport::TestCase
                 expected_sub_stewards_changes_view
               ]),
               'bob'               => Ladle::StewardView.new([
-                expected_stewards_changes_view
+                build(:steward_changes_view,
+                      stewards_file: 'stewards.yml',
+                      file_filter: Ladle::FileFilter.new(
+                                               include_patterns: ["**.rb"],
+                                               exclude_patterns: ["**.txt"]
+                      ),
+                      changes:       [
+                                       build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                       build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                                     ])
               ])
             })
 
