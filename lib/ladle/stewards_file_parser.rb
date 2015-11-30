@@ -27,6 +27,8 @@ module Ladle
       end
 
       StewardsFile.new(stewards)
+    rescue Psych::SyntaxError
+      raise ParsingError, "Failed parsing file"
     end
   end
 end

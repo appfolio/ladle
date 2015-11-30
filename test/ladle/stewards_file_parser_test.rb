@@ -29,6 +29,15 @@ class StewardsFileParserTest < ActiveSupport::TestCase
     assert_equal expected_stewards, stewards_file.stewards
   end
 
+  test 'invalid yaml' do
+    raised = assert_raises Ladle::StewardsFileParser::ParsingError do
+      Ladle::StewardsFileParser.parse("lasjf:\nlsdajfldj")
+    end
+
+    assert_equal "Failed parsing file", raised.message
+    assert_equal Psych::SyntaxError, raised.cause.class
+  end
+
   test 'parse steward rules' do
     content = <<-YAML
       stewards:
