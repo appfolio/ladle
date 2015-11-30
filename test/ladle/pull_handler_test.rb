@@ -356,7 +356,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
-  test 'notify - processing handles invalid stewards files ' do
+  test 'handle handles invalid stewards files ' do
     client = Octokit::Client.any_instance
     client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
       {
@@ -413,6 +413,87 @@ class PullHandlerTest < ActiveSupport::TestCase
             })
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
+
+    Ladle::PullHandler.new(@pull_request, notifier).handle
+  end
+
+  test 'handle omits notifying of views without changes' do
+    client = Octokit::Client.any_instance
+    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
+      {
+        head: {
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
+        }
+      })
+
+    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
+      [
+        {
+          status:   'added',
+          filename: 'hello/kitty/what/is/your/favorite_food.yml',
+          additions: 1,
+          deletions: 0,
+        },
+        {
+          status:    'added',
+          filename:  'hello/kitty/what/is/your/name.txt',
+          additions: 1,
+          deletions: 0,
+        }
+      ])
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/what/is/your/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
+      stewards:
+      - bleh
+      - xanderstrike
+    YAML
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/what/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
+      stewards:
+        - github_username: xanderstrike
+          include:
+            - "kitty/**/*.yml"
+          exclude:
+            - "**/name.txt"
+    YAML
+
+    client.expects(:contents)
+      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
+
+    expected_sub_stewards_changes_view = build(:steward_changes_view,
+                                               stewards_file: 'hello/kitty/what/is/stewards.yml',
+                                               changes:       [
+                                                                build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
+                                                                build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1),
+                                                              ])
+
+    notifier = mock
+    notifier.stubs(:id).returns(1)
+    notifier.expects(:notify)
+      .with({
+              'xanderstrike' => [
+                expected_sub_stewards_changes_view,
+              ],
+              'bleh'        => [
+                expected_sub_stewards_changes_view
+              ],
+            })
 
     Ladle::PullHandler.new(@pull_request, notifier).handle
   end

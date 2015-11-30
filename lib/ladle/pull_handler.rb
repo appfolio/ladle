@@ -93,6 +93,14 @@ module Ladle
           file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
           change_view.add_file_changes(file_changes)
         end
+
+        steward_change_views.reject! do |change_view|
+          change_view.empty?
+        end
+      end
+
+      stewards_registry.reject! do |_, steward_change_views|
+        steward_change_views.empty?
       end
     end
   end
