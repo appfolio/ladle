@@ -5,7 +5,7 @@ require 'ladle/steward_config'
 class StewardsFileParserTest < ActiveSupport::TestCase
 
   test 'parse empty' do
-    raised = assert_raises StandardError do
+    raised = assert_raises Ladle::StewardsFileParser::ParsingError do
       Ladle::StewardsFileParser.parse("")
     end
 

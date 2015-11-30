@@ -6,7 +6,7 @@ module Ladle
     end
 
     def self.parse(contents)
-      raise "Cannot parse empty file" if contents.blank?
+      raise ParsingError, "Cannot parse empty file" if contents.blank?
 
       yaml_contents = YAML.load(contents)
       stewards = (yaml_contents["stewards"] || []).map do |config|
