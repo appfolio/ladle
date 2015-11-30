@@ -1,4 +1,5 @@
 require 'ladle/stewards_file'
+require 'psych'
 
 module Ladle
   class StewardsFileParser
@@ -8,7 +9,7 @@ module Ladle
     def self.parse(contents)
       raise ParsingError, "Cannot parse empty file" if contents.blank?
 
-      yaml_contents = YAML.load(contents)
+      yaml_contents = Psych.load(contents)
       stewards = (yaml_contents["stewards"] || []).map do |config|
         github_username = config
         include_patterns = []
