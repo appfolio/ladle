@@ -82,6 +82,9 @@ module Ladle
         registry[steward_config.github_username] << changes_view
       end
     rescue Octokit::NotFound
+      # Ignore - stewards files don't have to exist
+    rescue StewardsFileParser::ParsingError => e
+      Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
     def collect_files(stewards_registry, pull_request_files)

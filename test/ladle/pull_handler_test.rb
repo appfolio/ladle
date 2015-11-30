@@ -356,6 +356,67 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
+  test 'notify - processing handles invalid stewards files ' do
+    client = Octokit::Client.any_instance
+    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
+      {
+        head: {
+          sha: 'branch_head'
+        },
+        base: {
+          sha: 'parent_head'
+        }
+      })
+
+    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
+      [
+        {
+          status:    "added",
+          filename:  'one.rb',
+          additions: 1,
+          deletions: 0,
+        },
+        {
+          status:    "modified",
+          filename:  'sub/marine.rb',
+          additions: 1,
+          deletions: 1,
+        },
+      ])
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'branch_head')
+      SOME WORDS
+    YAML
+
+    stub_stewards_file_contents(client, <<-YAML, path: 'stewards.yml', ref: 'branch_head')
+      stewards:
+        - xanderstrike
+        - fadsfadsfadsfadsf
+    YAML
+
+    expected_stewards_changes_view = build(:steward_changes_view,
+                                           stewards_file: 'stewards.yml',
+                                           changes:       [
+                                                            build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                                            build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                                                          ])
+
+    notifier = mock
+    notifier.expects(:notify)
+      .with({
+              'xanderstrike'      => [
+                expected_stewards_changes_view
+              ],
+              'fadsfadsfadsfadsf' => [
+                expected_stewards_changes_view
+              ],
+            })
+
+    Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
+
+    Ladle::PullHandler.new(@pull_request, notifier).handle
+  end
+
   test "collect_files" do
     registry = {
       'xanderstrike' => [
