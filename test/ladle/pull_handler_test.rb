@@ -417,7 +417,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(@pull_request, notifier).handle
   end
 
-  test 'handle omits notifying of views without changes' do
+  test 'handle omits notifying of views/stewards without changes' do
     client = Octokit::Client.any_instance
     client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
       {
@@ -466,6 +466,11 @@ class PullHandlerTest < ActiveSupport::TestCase
     stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
       stewards:
         - github_username: xanderstrike
+          include:
+            - "kitty/**/*.yml"
+          exclude:
+            - "**/name.txt"
+        - github_username: bob
           include:
             - "kitty/**/*.yml"
           exclude:
