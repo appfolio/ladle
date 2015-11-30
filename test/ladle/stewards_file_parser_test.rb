@@ -1,12 +1,12 @@
 require 'test_helper'
-require 'ladle/stewards_file'
+require 'ladle/stewards_file_parser'
 require 'ladle/steward_config'
 
-class StewardsFileTest < ActiveSupport::TestCase
+class StewardsFileParserTest < ActiveSupport::TestCase
 
   test 'parse empty' do
     raised = assert_raises StandardError do
-      Ladle::StewardsFile.parse("")
+      Ladle::StewardsFileParser.parse("")
     end
 
     assert_equal "Cannot parse empty file", raised.message
@@ -19,7 +19,7 @@ class StewardsFileTest < ActiveSupport::TestCase
         - bob
     YAML
 
-    stewards_file = Ladle::StewardsFile.parse(content)
+    stewards_file = Ladle::StewardsFileParser.parse(content)
 
     expected_stewards = [
       Ladle::StewardConfig.new(github_username: "xanderstrike"),
@@ -40,7 +40,7 @@ class StewardsFileTest < ActiveSupport::TestCase
        - bob
     YAML
 
-    stewards_file = Ladle::StewardsFile.parse(content)
+    stewards_file = Ladle::StewardsFileParser.parse(content)
 
     expected_stewards = [
       Ladle::StewardConfig.new(github_username: "xanderstrike", include_patterns: ["**/bleh", "**/whatever"], exclude_patterns: ["**/bleh/*.rb"]),
@@ -56,8 +56,8 @@ class StewardsFileTest < ActiveSupport::TestCase
        - name: xanderstrike
     YAML
 
-    raised = assert_raises Ladle::StewardsFile::ParsingError do
-      Ladle::StewardsFile.parse(content)
+    raised = assert_raises Ladle::StewardsFileParser::ParsingError do
+      Ladle::StewardsFileParser.parse(content)
     end
 
     assert_equal "Missing required key: github_username", raised.message

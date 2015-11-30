@@ -1,5 +1,5 @@
 require 'ladle/changed_files'
-require 'ladle/stewards_file'
+require 'ladle/stewards_file_parser'
 
 module Ladle
   class PullHandler
@@ -71,7 +71,7 @@ module Ladle
 
     def register_stewards(client, registry, stewards_file_path, sha)
       contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
-      stewards_file = StewardsFile.parse(Base64.decode64(contents))
+      stewards_file = StewardsFileParser.parse(Base64.decode64(contents))
 
       stewards_file.stewards.each do |steward_config|
         registry[steward_config.github_username] ||= []
