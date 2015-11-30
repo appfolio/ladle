@@ -1,4 +1,5 @@
 require 'ladle/changed_files'
+require 'ladle/stewards_file'
 
 module Ladle
   class PullHandler
@@ -70,19 +71,24 @@ module Ladle
 
     def register_stewards(client, registry, stewards_file_path, sha)
       contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
-      contents = YAML.load(Base64.decode64(contents))
+      stewards_file = StewardsFile.parse(Base64.decode64(contents))
 
-      contents['stewards'].each do |github_username|
-        registry[github_username] ||= []
-        registry[github_username] << Ladle::StewardsFileChangeset.new(stewards_file_path)
+      stewards_file.stewards.each do |steward_config|
+        registry[steward_config.github_username] ||= []
+
+        changes_view = Ladle::StewardChangesView.new(stewards_file: stewards_file_path,
+                                                     file_filter: steward_config.file_filter)
+
+        registry[steward_config.github_username] << changes_view
       end
     rescue Octokit::NotFound
     end
 
     def collect_files(stewards_registry, pull_request_files)
-      stewards_registry.each_value do |changesets|
-        changesets.each do |changeset|
-          changeset.changes.concat(pull_request_files.file_changes_in(changeset.stewards_file.dirname))
+      stewards_registry.each_value do |steward_change_views|
+        steward_change_views.each do |change_view|
+          file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
+          change_view.add_file_changes(file_changes)
         end
       end
     end

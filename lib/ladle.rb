@@ -2,5 +2,5 @@ module Ladle
   extend ActiveSupport::Autoload
 
   autoload :FileChange
-  autoload :StewardsFileChangeset
+  autoload :StewardChangesView
 end
