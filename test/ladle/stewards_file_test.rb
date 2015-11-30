@@ -49,4 +49,17 @@ class StewardsFileTest < ActiveSupport::TestCase
 
     assert_equal expected_stewards, stewards_file.stewards
   end
+
+  test 'parse steward rules - missing required key' do
+    content = <<-YAML
+      stewards:
+       - name: xanderstrike
+    YAML
+
+    raised = assert_raises Ladle::StewardsFile::ParsingError do
+      Ladle::StewardsFile.parse(content)
+    end
+
+    assert_equal "Missing required key: github_username", raised.message
+  end
 end
