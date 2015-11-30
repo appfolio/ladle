@@ -10,6 +10,8 @@ module Ladle
       raise ParsingError, "Cannot parse empty file" if contents.blank?
 
       yaml_contents = Psych.load(contents)
+      raise ParsingError, "Stewards file must contain a hash" unless yaml_contents.is_a?(Hash)
+
       stewards = (yaml_contents["stewards"] || []).map do |config|
         github_username = config
         include_patterns = []

@@ -38,6 +38,14 @@ class StewardsFileParserTest < ActiveSupport::TestCase
     assert_equal Psych::SyntaxError, raised.cause.class
   end
 
+  test 'invalid object' do
+    raised = assert_raises Ladle::StewardsFileParser::ParsingError do
+      Ladle::StewardsFileParser.parse("blehbleh")
+    end
+
+    assert_equal "Stewards file must contain a hash", raised.message
+  end
+
   test 'parse steward rules' do
     content = <<-YAML
       stewards:
