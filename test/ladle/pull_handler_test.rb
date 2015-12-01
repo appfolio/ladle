@@ -3,6 +3,7 @@ require 'ladle/pull_handler'
 require 'ladle/steward_config'
 require 'ladle/changed_files'
 require 'ladle/file_filter'
+require 'ladle/github_repository_client'
 
 class PullHandlerTest < ActiveSupport::TestCase
   setup do
@@ -36,7 +37,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
     Rails.stubs(:logger).returns(logger_mock)
 
-    Ladle::PullHandler.new(@pull_request, mock('notifier')).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), mock('notifier')).handle(@pull_request)
   end
 
   test 'notifies stewards' do
@@ -117,7 +118,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               ]
             })
 
-    Ladle::PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
   end
 
   test 'notifies old stewards' do
@@ -255,7 +256,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
   end
 
   test 'notify - stewards file not in changes_view' do
@@ -353,7 +354,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
   end
 
   test 'handle handles invalid stewards files ' do
@@ -414,7 +415,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
 
-    Ladle::PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
   end
 
   test 'handle omits notifying of views/stewards without changes' do
@@ -486,7 +487,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(@pull_request, notifier).handle
+    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
   end
 
   test "collect_files" do

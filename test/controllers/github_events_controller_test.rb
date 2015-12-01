@@ -55,17 +55,17 @@ class GithubEventsControllerTest < ActionController::TestCase
     repository = create_repository
 
     handler_mock = mock
-    handler_mock.expects(:handle)
+    handler_mock.expects(:handle).with(all_of(
+                                         is_a(PullRequest),
+                                         responds_with(:number, 5),
+                                         responds_with(:html_url, 'www.test.com'),
+                                         responds_with(:title, 'Hello Dude'),
+                                         responds_with(:body, "We did it!"),
+                                       ))
 
     Ladle::PullHandler.expects(:new).with(
-      all_of(
-        is_a(PullRequest),
-        responds_with(:number, 5),
-        responds_with(:html_url, 'www.test.com'),
-        responds_with(:title, 'Hello Dude'),
-        responds_with(:body, "We did it!"),
-      ),
-      is_a(Ladle::StewardNotifier)
+      is_a(Ladle::GithubRepositoryClient),
+      is_a(Ladle::StewardNotifier),
     ).returns(handler_mock)
 
     @controller.expects(:verify_signature)
@@ -109,7 +109,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     handler_mock = mock
     handler_mock.expects(:handle)
 
-    Ladle::PullHandler.expects(:new).with(pull_request, is_a(Ladle::StewardNotifier)).returns(handler_mock)
+    Ladle::PullHandler.expects(:new).with(is_a(Ladle::GithubRepositoryClient), is_a(Ladle::StewardNotifier)).returns(handler_mock)
 
     @controller.expects(:verify_signature)
 
