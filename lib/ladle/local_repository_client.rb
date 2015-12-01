@@ -1,5 +1,6 @@
 require 'rugged'
 
+require 'ladle/pull_request_info'
 require 'ladle/exceptions'
 
 module Ladle
@@ -11,14 +12,7 @@ module Ladle
     end
 
     def pull_request(pr_number)
-      {
-        base: {
-          sha: @base_ref
-        },
-        head: {
-          sha: @head_ref
-        },
-      }
+      Ladle::PullRequestInfo.new(@head_ref, @base_ref)
     end
 
     def pull_request_files(pr_number)

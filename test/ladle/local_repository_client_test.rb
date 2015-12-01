@@ -11,16 +11,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
   end
 
   test 'pull_request' do
-    expected_result = {
-      head: {
-        sha: 'branch_head'
-      },
-      base: {
-        sha: 'parent_head'
-      }
-    }
-
-    assert_equal expected_result, @client.pull_request(12)
+    assert_equal Ladle::PullRequestInfo.new('branch_head', 'parent_head'), @client.pull_request(12)
   end
 
   test "pull_request_files" do

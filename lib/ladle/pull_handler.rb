@@ -11,7 +11,7 @@ module Ladle
     end
 
     def handle(pull_request)
-      pr_info = fetch_pr_info(pull_request)
+      pr_info = @client.pull_request(pull_request.number)
 
       pull_request_files = fetch_changed_files(pull_request)
 
@@ -31,13 +31,6 @@ module Ladle
     end
 
     private
-
-    PullRequestInfo = Struct.new(:head_sha, :base_sha)
-
-    def fetch_pr_info(pull_request)
-      pr = @client.pull_request(pull_request.number)
-      PullRequestInfo.new(pr[:head][:sha], pr[:base][:sha])
-    end
 
     def fetch_changed_files(pull_request)
       changed_files = ChangedFiles.new

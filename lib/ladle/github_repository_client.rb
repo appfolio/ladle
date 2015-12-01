@@ -1,3 +1,4 @@
+require 'ladle/pull_request_info'
 require 'ladle/exceptions'
 
 module Ladle
@@ -8,7 +9,8 @@ module Ladle
     end
 
     def pull_request(pr_number)
-      @client.pull_request(@repository.name, pr_number)
+      pr = @client.pull_request(@repository.name, pr_number)
+      Ladle::PullRequestInfo.new(pr[:head][:sha], pr[:base][:sha])
     end
 
     def pull_request_files(pr_number)

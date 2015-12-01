@@ -11,19 +11,17 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
   end
 
   test 'pull_request' do
-    expected_result = {
-      head: {
-        sha: 'branch_head'
-      },
-      base: {
-        sha: 'parent_head'
-      }
-    }
-
     octokit_client = Octokit::Client.any_instance
-    octokit_client.expects(:pull_request).with(@repository.name, 12).returns(expected_result)
+    octokit_client.expects(:pull_request).with(@repository.name, 12).returns({
+                                                                               head: {
+                                                                                 sha: 'branch_head'
+                                                                               },
+                                                                               base: {
+                                                                                 sha: 'parent_head'
+                                                                               }
+                                                                             })
 
-    assert_equal expected_result, @client.pull_request(12)
+    assert_equal Ladle::PullRequestInfo.new('branch_head', 'parent_head'), @client.pull_request(12)
   end
 
   test "pull_request_files" do
