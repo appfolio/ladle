@@ -1,5 +1,3 @@
-require 'ladle/file_filter'
-
 module Ladle
   class StewardChangesView
     attr_reader :stewards_file, :file_filter, :changes
@@ -10,9 +8,13 @@ module Ladle
       @changes       = changes || []
     end
 
+    def empty?
+      @changes.empty?
+    end
+
     def add_file_changes(file_changes)
       file_changes.each do |file_change|
-        if @file_filter.include?(file_change.file)
+        if @file_filter.include?(file_change.file.relative_path_from(@stewards_file.dirname))
           @changes << file_change
         end
       end

@@ -1,5 +1,7 @@
 require 'ladle/changed_files'
-require 'ladle/stewards_file'
+require 'ladle/stewards_file_parser'
+require 'ladle/steward_changes_view'
+require 'ladle/file_change'
 
 module Ladle
   class PullHandler
@@ -71,7 +73,7 @@ module Ladle
 
     def register_stewards(client, registry, stewards_file_path, sha)
       contents = client.contents(@repository.name, path: stewards_file_path.to_s, ref: sha)[:content]
-      stewards_file = StewardsFile.parse(Base64.decode64(contents))
+      stewards_file = StewardsFileParser.parse(Base64.decode64(contents))
 
       stewards_file.stewards.each do |steward_config|
         registry[steward_config.github_username] ||= []
@@ -82,6 +84,9 @@ module Ladle
         registry[steward_config.github_username] << changes_view
       end
     rescue Octokit::NotFound
+      # Ignore - stewards files don't have to exist
+    rescue StewardsFileParser::ParsingError => e
+      Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
     def collect_files(stewards_registry, pull_request_files)
@@ -90,6 +95,14 @@ module Ladle
           file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
           change_view.add_file_changes(file_changes)
         end
+
+        steward_change_views.reject! do |change_view|
+          change_view.empty?
+        end
+      end
+
+      stewards_registry.reject! do |_, steward_change_views|
+        steward_change_views.empty?
       end
     end
   end
