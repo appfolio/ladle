@@ -1,4 +1,6 @@
-require 'test_helper'
+#!/usr/bin/env ruby
+require File.expand_path('../../test/test_helper', __FILE__)
+
 require 'ladle'
 
 require 'ladle/pull_handler'
