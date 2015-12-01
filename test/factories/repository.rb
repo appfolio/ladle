@@ -1,6 +1,6 @@
 FactoryGirl.define do
   sequence :name_sequence do |n|
-    "repo#{n}"
+    "org/repo#{n}"
   end
 
   factory :repository do
