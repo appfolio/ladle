@@ -449,11 +449,9 @@ class PullHandlerTest < ActiveSupport::TestCase
       .with(@repository.name, path: 'hello/kitty/what/is/your/stewards.yml', ref: 'branch_head')
       .raises(Octokit::NotFound)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
-      stewards:
-      - bleh
-      - xanderstrike
-    YAML
+    client.expects(:contents)
+      .with(@repository.name, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
+      .raises(Octokit::NotFound)
 
     client.expects(:contents)
       .with(@repository.name, path: 'hello/kitty/what/stewards.yml', ref: 'branch_head')
@@ -465,38 +463,26 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
       stewards:
-        - github_username: xanderstrike
-          include:
-            - "kitty/**/*.yml"
-          exclude:
-            - "**/name.txt"
+        - xanderstrike
         - github_username: bob
-          include:
-            - "kitty/**/*.yml"
-          exclude:
-            - "**/name.txt"
+          include: "*.bin"
     YAML
 
     client.expects(:contents)
       .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
       .raises(Octokit::NotFound)
 
-    expected_sub_stewards_changes_view = build(:steward_changes_view,
-                                               stewards_file: 'hello/kitty/what/is/stewards.yml',
-                                               changes:       [
-                                                                build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
-                                                                build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1),
-                                                              ])
-
     notifier = mock
     notifier.stubs(:id).returns(1)
     notifier.expects(:notify)
       .with({
               'xanderstrike' => [
-                expected_sub_stewards_changes_view,
-              ],
-              'bleh'        => [
-                expected_sub_stewards_changes_view
+                build(:steward_changes_view,
+                      stewards_file: 'hello/stewards.yml',
+                      changes:       [
+                                       build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
+                                       build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
+                                     ]),
               ],
             })
 
