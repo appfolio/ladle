@@ -1,5 +1,7 @@
 require 'ladle/changed_files'
 require 'ladle/stewards_file_parser'
+require 'ladle/steward_changes_view'
+require 'ladle/file_change'
 
 module Ladle
   class PullHandler

@@ -1,4 +1,6 @@
 require 'ladle/stewards_file'
+require 'ladle/steward_config'
+
 require 'psych'
 
 module Ladle

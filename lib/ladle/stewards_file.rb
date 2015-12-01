@@ -1,5 +1,3 @@
-require 'ladle/steward_config'
-
 module Ladle
   class StewardsFile
     attr_reader :stewards
