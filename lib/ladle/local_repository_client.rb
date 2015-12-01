@@ -57,8 +57,8 @@ module Ladle
 
     def map_status(status)
       case status
-      when :deleted then :removed
-      when :added, :modified then status
+      when :deleted then "removed"
+      when :added, :modified then status.to_s
       else
         raise "No support for status #{status.inspect}"
       end
