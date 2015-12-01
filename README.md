@@ -8,7 +8,8 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Ladle](#ladle)
-  - [Mission](#mission)
+  - [Usage](#usage)
+    - [Advanced](#advanced)
   - [Architecture](#architecture)
     - [Authentication](#authentication)
     - [Observing Repositories](#observing-repositories)
@@ -22,11 +23,9 @@
 
 # Ladle
 
-Serving stew to stewards.
-
-## Mission
-
 An application for assisting in Appfolio's implementation of code stewardship. Stewards are folks that look after a section of code. Stewardship is opt-in and open to anyone.
+
+## Usage
 
 To opt-in, add your GitHub username to a `stewards.yml` file anywhere in the directory structure of a repository monitored by Ladle; for example:
 
@@ -41,6 +40,23 @@ This entry states that `dhh` is a steward of everything under _app/_.
 To get notifications anytime any Pull Requests are opened that modify files in _app/_, login to Ladle using your the GitHub user you used in the `stewards.yml` file.
 
 To remove notifications remove your name from the `stewards.yml` file.
+
+### Advanced 
+
+Stewards file entries may include per user glob patterns for declaring more detailed targeting. For example:
+
+  _in app/stewards.yml:_
+  ```yaml
+  stewards:
+    - ykatz
+    - github_username: dhh
+      include: 
+        - models/*.rb
+        - controllers/*.rb
+      exclude: models/django/*.rb
+  ```
+
+The above file specifies that `dhh` is a steward of everything under _app/_ matching the `include:` key and not matching the `exclude:` key, while `ykatz` is a steward of everything under _app/_.
 
 ## Architecture
 
