@@ -1,3 +1,5 @@
+require 'ladle/exceptions'
+
 module Ladle
   class GithubRepositoryClient
     def initialize(repository)
@@ -14,7 +16,10 @@ module Ladle
     end
 
     def contents(path:, ref:)
-      @client.contents(@repository.name, path: path, ref: ref)
+      content = @client.contents(@repository.name, path: path, ref: ref)[:content]
+      Base64.decode64(content)
+    rescue Octokit::NotFound
+      raise Ladle::RemoteFileNotFound
     end
   end
 end

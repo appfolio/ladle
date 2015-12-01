@@ -68,8 +68,8 @@ module Ladle
     end
 
     def register_stewards(registry, stewards_file_path, sha)
-      contents = @client.contents(path: stewards_file_path.to_s, ref: sha)[:content]
-      stewards_file = StewardsFileParser.parse(Base64.decode64(contents))
+      contents = @client.contents(path: stewards_file_path.to_s, ref: sha)
+      stewards_file = StewardsFileParser.parse(contents)
 
       stewards_file.stewards.each do |steward_config|
         registry[steward_config.github_username] ||= []
@@ -79,7 +79,7 @@ module Ladle
 
         registry[steward_config.github_username] << changes_view
       end
-    rescue Octokit::NotFound
+    rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
     rescue StewardsFileParser::ParsingError => e
       Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")

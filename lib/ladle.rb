@@ -4,3 +4,5 @@ module Ladle
   autoload :FileChange
   autoload :StewardChangesView
 end
+
+require 'ladle/exceptions'

@@ -170,6 +170,7 @@ GEM
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
+    rugged (0.23.3)
     safe_yaml (1.0.4)
     sass (3.4.18)
     sass-rails (5.0.4)
@@ -245,6 +246,7 @@ DEPENDENCIES
   puma
   rails (= 4.2.4)
   rails_12factor
+  rugged
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
   simple_form (~> 3.2)
