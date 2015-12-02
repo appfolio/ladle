@@ -25,15 +25,17 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
   end
 
   test "pull_request_files" do
-    expected_result = [
-      {status: "added", filename: 'one.rb'},
-      {status: "modified", filename: 'sub/marine.rb'},
-    ]
-
     octokit_client = Octokit::Client.any_instance
-    octokit_client.expects(:pull_request_files).with(@repository.name, 12).returns(expected_result)
+    octokit_client.expects(:pull_request_files).with(@repository.name, 12).returns([
+                                                                                     {status: "added", filename: 'one.rb'},
+                                                                                     {status: "modified", filename: 'sub/marine.rb'},
+                                                                                   ])
 
-    assert_equal expected_result, @client.pull_request_files(12)
+    expected = Ladle::ChangedFiles.new
+    expected.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
+    expected.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
+
+    assert_equal expected, @client.pull_request_files(12)
   end
 
   test "contents" do

@@ -1,7 +1,9 @@
 require 'rugged'
 
-require 'ladle/pull_request_info'
+require 'ladle/changed_files'
 require 'ladle/exceptions'
+require 'ladle/file_change'
+require 'ladle/pull_request_info'
 
 module Ladle
   class LocalRepositoryClient
@@ -17,16 +19,22 @@ module Ladle
 
     def pull_request_files(pr_number)
       @files ||= begin
+        changed_files = Ladle::ChangedFiles.new
+
         commit = @repo.lookup(@head_ref)
         diff   = commit.diff(@base_ref)
-        diff.deltas.map do |delta|
-          {
+        diff.deltas.each do |delta|
+          file_change = Ladle::FileChange.new(
             status:    map_status(delta.status),
-            filename:  delta.new_file[:path],
+            file:      delta.new_file[:path],
             additions: 1,
-            deletions: 0,
-          }
+            deletions: 0
+          )
+
+          changed_files.add_file_change(file_change)
         end
+
+        changed_files
       end
     end
 
@@ -51,8 +59,8 @@ module Ladle
 
     def map_status(status)
       case status
-      when :deleted then "removed"
-      when :added, :modified then status.to_s
+      when :deleted then :removed
+      when :added, :modified then status
       else
         raise "No support for status #{status.inspect}"
       end

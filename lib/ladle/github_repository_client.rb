@@ -1,5 +1,7 @@
-require 'ladle/pull_request_info'
+require 'ladle/changed_files'
 require 'ladle/exceptions'
+require 'ladle/file_change'
+require 'ladle/pull_request_info'
 
 module Ladle
   class GithubRepositoryClient
@@ -14,7 +16,19 @@ module Ladle
     end
 
     def pull_request_files(pr_number)
-      @client.pull_request_files(@repository.name, pr_number)
+      changed_files = Ladle::ChangedFiles.new
+
+      @client.pull_request_files(@repository.name, pr_number).each do |file|
+        file_change = Ladle::FileChange.new(
+          status:    file[:status].to_sym,
+          file:      file[:filename],
+          additions: file[:additions],
+          deletions: file[:deletions]
+        )
+        changed_files.add_file_change(file_change)
+      end
+
+      changed_files
     end
 
     def contents(path:, ref:)

@@ -1,7 +1,5 @@
-require 'ladle/changed_files'
 require 'ladle/stewards_file_parser'
 require 'ladle/steward_changes_view'
-require 'ladle/file_change'
 
 module Ladle
   class PullHandler
@@ -13,7 +11,7 @@ module Ladle
     def handle(pull_request)
       pr_info = @client.pull_request(pull_request.number)
 
-      pull_request_files = fetch_changed_files(pull_request)
+      pull_request_files = @client.pull_request_files(pull_request.number)
 
       stewards_registry = {}
 
@@ -31,22 +29,6 @@ module Ladle
     end
 
     private
-
-    def fetch_changed_files(pull_request)
-      changed_files = ChangedFiles.new
-
-      @client.pull_request_files(pull_request.number).each do |file|
-        file_change = Ladle::FileChange.new(
-          status:    file[:status].to_sym,
-          file:      file[:filename],
-          additions: file[:additions],
-          deletions: file[:deletions]
-        )
-        changed_files.add_file_change(file_change)
-      end
-
-      changed_files
-    end
 
     def read_current_stewards(registry, pull_request_files, pr_head)
       pull_request_files.directories.each do |directory|
