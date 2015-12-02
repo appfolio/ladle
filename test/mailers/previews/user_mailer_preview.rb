@@ -13,7 +13,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         "We made these changes because things needed to be changed and we noticed and we had the means to make the changes, so we did."
                       ),
-                      create_steward_changes_views: create_steward_changes_views)
+                      steward_changes_views: create_steward_changes_views)
   end
 
   def notify_without_description
@@ -24,7 +24,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         nil
                       ),
-                      create_steward_changes_views: create_steward_changes_views)
+                      steward_changes_views: create_steward_changes_views)
 
   end
 
