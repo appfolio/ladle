@@ -7,7 +7,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
 
   setup do
     @repository = create(:repository)
-    @client     = Ladle::LocalRepositoryClient.new('test/test_repo', base_ref: 'parent_head', head_ref: 'branch_head')
+    @client     = Ladle::LocalRepositoryClient.new(Rails.root.to_s, base_ref: 'parent_head', head_ref: 'branch_head')
   end
 
   test 'pull_request' do
