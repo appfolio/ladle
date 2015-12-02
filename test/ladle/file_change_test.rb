@@ -23,6 +23,12 @@ class FileChangeTest < ActiveSupport::TestCase
 
     file_change = build(:file_change, status: :added, file: "bleh.rb")
     assert_equal "A", file_change.status_initial
+
+    file_change = build(:file_change, status: :renamed, file: "bleh.rb")
+    assert_equal "R", file_change.status_initial
+
+    file_change = build(:file_change, status: :copied, file: "bleh.rb")
+    assert_equal "C", file_change.status_initial
   end
 
   test 'changes_count' do
@@ -33,6 +39,12 @@ class FileChangeTest < ActiveSupport::TestCase
     assert_equal 6, file_change.changes_count
 
     file_change = build(:file_change, status: :modified, additions: 3, deletions: 3)
+    assert_equal 6, file_change.changes_count
+
+    file_change = build(:file_change, status: :renamed, additions: 3, deletions: 3)
+    assert_equal 6, file_change.changes_count
+
+    file_change = build(:file_change, status: :copied, additions: 3, deletions: 3)
     assert_equal 6, file_change.changes_count
   end
 
