@@ -1,9 +1,11 @@
 module Ladle
   class FileChange
     STATUS_INITIALS = {
-      removed: "D",
+      removed:  "D",
       modified: "M",
-      added: "A"
+      added:    "A",
+      renamed:  "R",
+      copied:   "C",
     }
     attr_reader :status, :file, :additions, :deletions
 
@@ -22,7 +24,7 @@ module Ladle
         @deletions
       when :added
         @additions
-      when :modified
+      when :modified, :renamed, :copied
         @additions + @deletions
       end
     end
