@@ -66,6 +66,17 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     assert_equal 'sub/stewards.yml', raised.message
   end
 
+  test "map_status" do
+    assert_equal :removed, @client.send(:map_status, :deleted)
+    assert_equal :added, @client.send(:map_status, :added)
+    assert_equal :modified, @client.send(:map_status, :modified)
+    raised = assert_raise RuntimeError do
+      @client.send(:map_status, :what)
+    end
+
+    assert_equal "No support for status :what", raised.message
+  end
+
   test "works with PullHandler" do
     handler_state = states('handler_state').starts_as('finding_files')
 
