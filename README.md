@@ -13,6 +13,7 @@
   - [Architecture](#architecture)
     - [Authentication](#authentication)
     - [Observing Repositories](#observing-repositories)
+  - [Development](#development)
   - [Deployment](#deployment)
     - [Heroku](#heroku)
     - [GitHub Application](#github-application)
@@ -88,6 +89,10 @@ Currently, repositories are added manually via the below. In the future, we coul
   ```ruby
     Repository.create!(name: 'dhh/f-bombs', webhook_secret: '<webhook_secret>', user: User.find_by_github_username('dhh'))
   ```
+
+## Development
+
+See [development.md](development.md).
 
 ## Deployment
 

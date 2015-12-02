@@ -54,6 +54,12 @@ module Ladle
       end
     end
 
+    def ==(other)
+      @modified_stewards_files == other.modified_stewards_files && directories == other.directories
+    end
+
+    alias eql? ==
+
     private
 
     def normalize_directory_path(path)
