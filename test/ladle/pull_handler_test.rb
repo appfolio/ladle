@@ -1,9 +1,9 @@
 require 'test_helper'
+
 require 'ladle/pull_handler'
-require 'ladle/steward_config'
+require 'ladle/pull_request_info'
 require 'ladle/changed_files'
 require 'ladle/file_filter'
-require 'ladle/github_repository_client'
 
 class PullHandlerTest < ActiveSupport::TestCase
   setup do
@@ -13,68 +13,44 @@ class PullHandlerTest < ActiveSupport::TestCase
   end
 
   test 'does nothing when there are not stewards' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {status: "added", filename: 'one.rb'},
-        {status: "modified", filename: 'sub/marine.rb'},
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(@repository.name, path: 'sub/stewards.yml', ref: 'branch_head').raises(Octokit::NotFound)
-    client.expects(:contents).with(@repository.name, path: 'stewards.yml', ref: 'branch_head').raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
     logger_mock = mock
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
     Rails.stubs(:logger).returns(logger_mock)
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), mock('notifier')).handle(@pull_request)
+    Ladle::PullHandler.new(client, mock('notifier')).handle(@pull_request)
   end
 
   test 'notifies stewards' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {
-          status:    "added",
-          filename:  'one.rb',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status:    "modified",
-          filename:  'sub/marine.rb',
-          additions: 1,
-          deletions: 1,
-        },
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
     YAML
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - github_username: bob
           include: "**.rb"
@@ -118,92 +94,51 @@ class PullHandlerTest < ActiveSupport::TestCase
               ]
             })
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
   test 'notifies old stewards' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {
-          status: 'removed',
-          filename: 'stewards.yml',
-          additions: 0,
-          deletions: 1,
-        },
-        {
-          status:    "added",
-          filename:  'one.rb',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status: "modified",
-          filename: 'sub/marine.rb',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status: "modified",
-          filename: 'sub/stewards.yml',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status: "removed",
-          filename: 'sub2/sandwich',
-          additions: 0,
-          deletions: 1,
-        },
-        {
-          status: "removed",
-          filename: 'sub3/stewards.yml',
-          additions: 0,
-          deletions: 1,
-        },
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'sub3/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub2/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'sub2/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - hamburglar
     YAML
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
     YAML
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'stewards.yml', ref: 'parent_head')
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'parent_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - bob
     YAML
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'parent_head')
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'parent_head').returns(<<-YAML)
       stewards:
         - jeb
     YAML
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub3/stewards.yml', ref: 'parent_head')
+    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'parent_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - bob
@@ -256,73 +191,35 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
   test 'notify - stewards file not in changes_view' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {
-          status:   'added',
-          filename: 'goodbye/kitty/sianara.txt',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status:    "added",
-          filename:  'hello/kitty/what/che.txt',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status:    "removed",
-          filename: 'hello/kitty/what/is/stewards.yml',
-          additions: 0,
-          deletions: 1,
-        }
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'goodbye/kitty/sianara.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'goodbye/kitty/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'goodbye/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'goodbye/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'goodbye/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/what/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - xanderstrike
     YAML
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'hello/kitty/what/is/stewards.yml', ref: 'parent_head')
+    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'parent_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - bleh
@@ -354,42 +251,25 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
   test 'handle handles invalid stewards files ' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {
-          status:    "added",
-          filename:  'one.rb',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status:    "modified",
-          filename:  'sub/marine.rb',
-          additions: 1,
-          deletions: 1,
-        },
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'sub/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       SOME WORDS
     YAML
 
-    stub_stewards_file_contents(client, <<-YAML, path: 'stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
@@ -415,63 +295,33 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
   test 'handle omits notifying of views/stewards without changes' do
-    client = Octokit::Client.any_instance
-    client.expects(:pull_request).with(@repository.name, @pull_request.number).returns(
-      {
-        head: {
-          sha: 'branch_head'
-        },
-        base: {
-          sha: 'parent_head'
-        }
-      })
+    client = mock('repository_client')
+    client.expects(:pull_request).with(@pull_request.number).returns(
+      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+    )
 
-    client.expects(:pull_request_files).with(@repository.name, @pull_request.number).returns(
-      [
-        {
-          status:   'added',
-          filename: 'hello/kitty/what/is/your/favorite_food.yml',
-          additions: 1,
-          deletions: 0,
-        },
-        {
-          status:    'added',
-          filename:  'hello/kitty/what/is/your/name.txt',
-          additions: 1,
-          deletions: 0,
-        }
-      ])
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1))
+    client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/what/is/your/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/your/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/what/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    client.expects(:contents)
-      .with(@repository.name, path: 'hello/kitty/stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
-
-    stub_stewards_file_contents(client, <<-YAML, path: 'hello/stewards.yml', ref: 'branch_head')
+    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - github_username: bob
           include: "*.bin"
     YAML
 
-    client.expects(:contents)
-      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
-      .raises(Octokit::NotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
 
     notifier = mock
     notifier.stubs(:id).returns(1)
@@ -487,7 +337,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               ],
             })
 
-    Ladle::PullHandler.new(Ladle::GithubRepositoryClient.new(@repository), notifier).handle(@pull_request)
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
   test "collect_files" do
@@ -527,8 +377,6 @@ class PullHandlerTest < ActiveSupport::TestCase
   private
 
   def stub_stewards_file_contents(client, contents, path:, ref:)
-    client.expects(:contents)
-      .with(@repository.name, path: path, ref: ref)
-      .returns(content: Base64.encode64(contents))
+    client.expects(:contents).with(path: path, ref: ref).returns(contents)
   end
 end
