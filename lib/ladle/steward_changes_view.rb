@@ -1,3 +1,5 @@
+require 'ladle/file_filter'
+
 module Ladle
   class StewardChangesView
     attr_reader :stewards_file, :file_filter, :changes
