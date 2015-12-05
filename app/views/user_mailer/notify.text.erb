@@ -10,7 +10,7 @@ You can view, comment on, or merge this pull request online at:
 
 You were notified of this pull request because of the following changes:
 
-<% @steward_changes_views.each do |steward_changes| %>
+<% @stewards_file_map.each do |stewards_file_path, steward_changes| %>
   Changes monitored by <%= steward_changes.stewards_file %>:
 
   <% steward_changes.changes.each do |change| %>

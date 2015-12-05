@@ -18,7 +18,7 @@ module Ladle
       read_current_stewards(stewards_registry, pull_request_files, pr_info.head_sha)
       read_old_stewards(stewards_registry, pull_request_files, pr_info.base_sha)
 
-      collect_files(stewards_registry, pull_request_files)
+      stewards_registry = resolve_stewards_scope(stewards_registry, pull_request_files)
 
       if stewards_registry.empty?
         Rails.logger.info('No stewards found. Doing nothing.')
@@ -47,12 +47,12 @@ module Ladle
       stewards_file = StewardsFileParser.parse(contents)
 
       stewards_file.stewards.each do |steward_config|
-        registry[steward_config.github_username] ||= []
+        registry[steward_config.github_username] ||= {}
 
         changes_view = Ladle::StewardChangesView.new(stewards_file: stewards_file_path,
                                                      file_filter: steward_config.file_filter)
 
-        registry[steward_config.github_username] << changes_view
+        registry[steward_config.github_username][stewards_file_path.to_s] = changes_view
       end
     rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
@@ -60,21 +60,26 @@ module Ladle
       Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
-    def collect_files(stewards_registry, pull_request_files)
-      stewards_registry.each_value do |steward_change_views|
-        steward_change_views.each do |change_view|
-          file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
-          change_view.add_file_changes(file_changes)
-        end
+    def select_non_empty_change_views(stewards_file_map, pull_request_files)
+      stewards_file_map.reject do |stewards_file_path, change_view|
+        file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
+        change_view.add_file_changes(file_changes)
+        change_view.empty?
+      end
+    end
 
-        steward_change_views.reject! do |change_view|
-          change_view.empty?
+    def resolve_stewards_scope(stewards_registry, pull_request_files)
+      output = {}
+
+      stewards_registry.each do |github_username, stewards_file_map|
+        non_empty_file_map = select_non_empty_change_views(stewards_file_map, pull_request_files)
+
+        unless non_empty_file_map.empty?
+          output[github_username] = non_empty_file_map
         end
       end
 
-      stewards_registry.reject! do |_, steward_change_views|
-        steward_change_views.empty?
-      end
+      output
     end
   end
 end

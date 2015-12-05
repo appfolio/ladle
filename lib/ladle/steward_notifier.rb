@@ -25,8 +25,8 @@ module Ladle
       user.notifications.where(pull_request: @pull_request).exists?
     end
 
-    def send_email(user, steward_changes_views)
-      UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, steward_changes_views: steward_changes_views).deliver_now
+    def send_email(user, stewards_file_map)
+      UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, stewards_file_map: stewards_file_map).deliver_now
     end
 
     def create_notification(users)

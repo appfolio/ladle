@@ -9,7 +9,7 @@
 <p>You were notified of this pull request because of the following changes:</p>
 
 <ul>
-<% @steward_changes_views.each do |steward_changes| %>
+<% @stewards_file_map.each do |stewards_file_path, steward_changes| %>
   <li>
     <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
     <ul>
