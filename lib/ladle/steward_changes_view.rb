@@ -33,5 +33,13 @@ module Ladle
     end
 
     alias eql? ==
+
+    def inspect
+      {
+        file_filter: @file_filter,
+        stewards_file: @stewards_file.to_s,
+        changes: @changes,
+      }.inspect
+    end
   end
 end

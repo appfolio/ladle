@@ -28,6 +28,13 @@ module Ladle
       matches_include && ! matches_exclude
     end
 
+    def inspect
+      {
+        include: @include_patterns,
+        exclude: @exclude_patterns,
+      }.inspect
+    end
+
     protected
 
     attr_reader :include_patterns, :exclude_patterns

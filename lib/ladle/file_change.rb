@@ -45,5 +45,13 @@ module Ladle
     end
 
     alias eql? ==
+
+    def inspect
+      {
+        status: status_initial,
+        file: @file.to_s,
+        changes: changes_count,
+      }.inspect
+    end
   end
 end
