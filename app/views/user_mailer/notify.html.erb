@@ -9,15 +9,17 @@
 <p>You were notified of this pull request because of the following changes:</p>
 
 <ul>
-<% @stewards_file_map.each do |stewards_file_path, steward_changes| %>
+  <% @stewards_file_map.each do |stewards_file_path, steward_change_views| %>
+    <% steward_change_views.each do |steward_change_view| %>
   <li>
-    <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
+    <p>Changes monitored by <%= steward_change_view.stewards_file %>:</p>
     <ul>
-      <% steward_changes.changes.each do |change| %>
+      <% steward_change_view.changes.each do |change| %>
         <li><strong><%= change.status_initial %></strong> <%= change.file %> (<%= change.changes_count %>)</li>
       <% end %>
     </ul>
   </li>
+    <% end %>
   <% end %>
 </ul>
 

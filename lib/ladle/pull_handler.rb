@@ -52,7 +52,7 @@ module Ladle
         changes_view = Ladle::StewardChangesView.new(stewards_file: stewards_file_path,
                                                      file_filter: steward_config.file_filter)
 
-        registry[steward_config.github_username][stewards_file_path.to_s] = changes_view
+        registry[steward_config.github_username][stewards_file_path.to_s] = [changes_view]
       end
     rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
@@ -61,7 +61,8 @@ module Ladle
     end
 
     def select_non_empty_change_views(stewards_file_map, pull_request_files)
-      stewards_file_map.reject do |stewards_file_path, change_view|
+      stewards_file_map.reject do |stewards_file_path, change_views|
+        change_view = change_views.first
         file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
         change_view.add_file_changes(file_changes)
         change_view.empty?
