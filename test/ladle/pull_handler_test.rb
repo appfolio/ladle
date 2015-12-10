@@ -7,6 +7,8 @@ require 'ladle/file_filter'
 
 require 'ladle/stubbed_repo_client'
 
+require 'mocha_deep_hash'
+
 class PullHandlerTest < ActiveSupport::TestCase
   setup do
     user = create(:user)
@@ -63,7 +65,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                               ])
     notifier = mock
     notifier.expects(:notify)
-      .with({
+      .with(deep_hash({
               'xanderstrike'      => {
                 'sub/stewards.yml' => [expected_sub_stewards_changes_view],
                 'stewards.yml'     => [expected_stewards_changes_view]
@@ -84,7 +86,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                         ])
                 ]
               }
-            })
+            }))
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
@@ -167,7 +169,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     notifier = mock
     notifier.expects(:notify)
-      .with({
+      .with(deep_hash({
               'xanderstrike'      => {
                 'sub/stewards.yml'  => [expected_sub_stewards_changes_view],
                 'stewards.yml'      => [expected_stewards_changes_view],
@@ -186,7 +188,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               'hamburglar'        => {
                 'sub2/stewards.yml' => [expected_sub2_stewards_changes_view]
               },
-            })
+            }))
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
@@ -225,7 +227,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     notifier = mock
     notifier.expects(:notify)
-      .with({
+      .with(deep_hash({
               'xanderstrike' => {
                 'hello/stewards.yml' => [expected_stewards_changes_view],
                 'hello/kitty/what/is/stewards.yml' => [expected_sub_stewards_changes_view]
@@ -233,7 +235,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               'bleh'         => {
                 'hello/kitty/what/is/stewards.yml' => [expected_sub_stewards_changes_view]
               }
-            })
+            }))
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
@@ -266,10 +268,10 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     notifier = mock
     notifier.expects(:notify)
-      .with({
+      .with(deep_hash({
               'xanderstrike'      => expected_stewards_changes_view,
               'fadsfadsfadsfadsf' => expected_stewards_changes_view,
-            })
+            }))
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
 
@@ -293,7 +295,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     notifier = mock
     notifier.stubs(:id).returns(1)
     notifier.expects(:notify)
-      .with({
+      .with(deep_hash({
               'xanderstrike' => {
                 'hello/stewards.yml' => [build(:steward_changes_view,
                                               stewards_file: 'hello/stewards.yml',
@@ -302,7 +304,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                                build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
                                                              ])],
               },
-            })
+            }))
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
