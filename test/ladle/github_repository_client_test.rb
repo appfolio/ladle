@@ -17,11 +17,11 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
                                                                                  sha: 'branch_head'
                                                                                },
                                                                                base: {
-                                                                                 sha: 'parent_head'
+                                                                                 sha: 'base_head'
                                                                                }
                                                                              })
 
-    assert_equal Ladle::PullRequestInfo.new('branch_head', 'parent_head'), @client.pull_request(12)
+    assert_equal Ladle::PullRequestInfo.new('branch_head', 'base_head'), @client.pull_request(12)
   end
 
   test "pull_request_files" do
@@ -71,7 +71,7 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
         sha: 'branch_head'
       },
       base: {
-        sha: 'parent_head'
+        sha: 'base_head'
       }
     }
 
@@ -93,10 +93,10 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
         - fadsfadsfadsfadsf
     YAML
 
-    stub_stewards_file_contents(octokit_client, expected_result, path: 'sub/stewards.yml', ref: 'branch_head')
+    stub_stewards_file_contents(octokit_client, expected_result, path: 'sub/stewards.yml', ref: 'base_head')
 
     octokit_client.expects(:contents)
-      .with(@repository.name, path: 'stewards.yml', ref: 'branch_head')
+      .with(@repository.name, path: 'stewards.yml', ref: 'base_head')
       .raises(Octokit::NotFound)
 
     notifier = mock

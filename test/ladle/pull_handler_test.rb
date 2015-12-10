@@ -15,7 +15,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'does nothing when there are not stewards' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -23,8 +23,8 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
 
     logger_mock = mock
     logger_mock.expects(:info).with('No stewards found. Doing nothing.')
@@ -36,7 +36,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'notifies stewards' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -44,13 +44,13 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
     YAML
 
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - github_username: bob
           include: "**.rb"
@@ -82,15 +82,16 @@ class PullHandlerTest < ActiveSupport::TestCase
               },
               'bob'               => {
                 'stewards.yml' => [build(:steward_changes_view,
-                                        stewards_file: 'stewards.yml',
-                                        file_filter:   Ladle::FileFilter.new(
-                                          include_patterns: ["**.rb"],
-                                          exclude_patterns: ["**.txt"]
-                                        ),
-                                        changes:       [
-                                                         build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                                                         build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                                                       ])]
+                                         stewards_file: 'stewards.yml',
+                                         file_filter:   Ladle::FileFilter.new(
+                                           include_patterns: ["**.rb"],
+                                           exclude_patterns: ["**.txt"]
+                                         ),
+                                         changes:       [
+                                                          build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                                          build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                                                        ])
+                ]
               }
             })
 
@@ -100,7 +101,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'notifies old stewards' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -109,14 +110,29 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1))
     changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1))
     changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1))
     changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    # sub3/stewards.yml removed by branch
+    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'base_head').returns(<<-YAML)
+      stewards:
+        - xanderstrike
+        - bob
+    YAML
+    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'branch_head').never
 
+    # sub2/stewards.yml added by branch
+    client.expects(:contents).with(path: 'sub2/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
     client.expects(:contents).with(path: 'sub2/stewards.yml', ref: 'branch_head').returns(<<-YAML)
       stewards:
         - hamburglar
+    YAML
+
+    # sub/stewards.yml exists on both, changed by branch
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'base_head').returns(<<-YAML)
+      stewards:
+        - jeb
     YAML
 
     client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
@@ -125,24 +141,13 @@ class PullHandlerTest < ActiveSupport::TestCase
         - fadsfadsfadsfadsf
     YAML
 
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'parent_head').returns(<<-YAML)
+    # stewards.yml exists on base
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - bob
     YAML
-
-    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'parent_head').returns(<<-YAML)
-      stewards:
-        - jeb
-    YAML
-
-    client.expects(:contents).with(path: 'sub3/stewards.yml', ref: 'parent_head').returns(<<-YAML)
-      stewards:
-        - xanderstrike
-        - bob
-    YAML
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').never
 
     expected_stewards_changes_view = build(:steward_changes_view,
                                            stewards_file: 'stewards.yml',
@@ -152,6 +157,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                             build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
                                                             build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
                                                             build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
+                                                            build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1),
                                                             build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
                                                           ])
 
@@ -160,6 +166,13 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                changes:       [
                                                                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
                                                                 build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1)
+                                                              ])
+
+    expected_sub2_stewards_changes_view = build(:steward_changes_view,
+                                               stewards_file: 'sub2/stewards.yml',
+                                               changes:       [
+                                                                build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
+                                                                build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1)
                                                               ])
 
     expected_sub3_stewards_changes_view = build(:steward_changes_view,
@@ -187,7 +200,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                 'sub/stewards.yml' => [expected_sub_stewards_changes_view]
               },
               'hamburglar'        => {
-                'sub2/stewards.yml' => [build(:steward_changes_view, stewards_file: 'sub2/stewards.yml', changes: [build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1)])]
+                'sub2/stewards.yml' => [expected_sub2_stewards_changes_view]
               },
             })
 
@@ -197,7 +210,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'notify - stewards file not in changes_view' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -206,48 +219,45 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'goodbye/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'goodbye/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-
-    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'branch_head').returns(<<-YAML)
-      stewards:
-        - xanderstrike
-    YAML
-
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-
-    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'parent_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'goodbye/kitty/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'goodbye/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - bleh
     YAML
+    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'base_head').returns(<<-YAML)
+      stewards:
+        - xanderstrike
+    YAML
 
-    expected_stewards_changes_view = {
-      'hello/stewards.yml' => [build(:steward_changes_view,
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+
+    expected_stewards_changes_view = build(:steward_changes_view,
                                     stewards_file: 'hello/stewards.yml',
                                     changes:       [
                                                      build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
                                                      build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-                                                   ])]
-    }
+                                                   ])
 
-    expected_sub_stewards_changes_view = {
-      'hello/kitty/what/is/stewards.yml' => [build(:steward_changes_view,
+    expected_sub_stewards_changes_view = build(:steward_changes_view,
                                                   stewards_file: 'hello/kitty/what/is/stewards.yml',
                                                   changes:       [
                                                                    build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-                                                                 ])]
-    }
+                                                                 ])
 
     notifier = mock
-    notifier.stubs(:id).returns(1)
     notifier.expects(:notify)
       .with({
-              'xanderstrike' => expected_stewards_changes_view.merge(expected_sub_stewards_changes_view),
-              'bleh'         => expected_sub_stewards_changes_view
+              'xanderstrike' => {
+                'hello/stewards.yml' => [expected_stewards_changes_view],
+                'hello/kitty/what/is/stewards.yml' => [expected_sub_stewards_changes_view]
+              },
+              'bleh'         => {
+                'hello/kitty/what/is/stewards.yml' => [expected_sub_stewards_changes_view]
+              }
             })
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
@@ -256,7 +266,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'handle handles invalid stewards files ' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -264,11 +274,11 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'branch_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'sub/stewards.yml', ref: 'base_head').returns(<<-YAML)
       SOME WORDS
     YAML
 
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - fadsfadsfadsfadsf
@@ -298,7 +308,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   test 'handle omits notifying of views/stewards without changes' do
     client = mock('repository_client')
     client.expects(:pull_request).with(@pull_request.number).returns(
-      Ladle::PullRequestInfo.new('branch_head', 'parent_head')
+      Ladle::PullRequestInfo.new('branch_head', 'base_head')
     )
 
     changed_files = Ladle::ChangedFiles.new
@@ -306,19 +316,19 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1))
     client.expects(:pull_request_files).with(@pull_request.number).returns(changed_files)
 
-    client.expects(:contents).with(path: 'hello/kitty/what/is/your/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
-    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/your/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/is/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/what/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'hello/kitty/stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
 
-    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'branch_head').returns(<<-YAML)
+    client.expects(:contents).with(path: 'hello/stewards.yml', ref: 'base_head').returns(<<-YAML)
       stewards:
         - xanderstrike
         - github_username: bob
           include: "*.bin"
     YAML
 
-    client.expects(:contents).with(path: 'stewards.yml', ref: 'branch_head').raises(Ladle::RemoteFileNotFound)
+    client.expects(:contents).with(path: 'stewards.yml', ref: 'base_head').raises(Ladle::RemoteFileNotFound)
 
     notifier = mock
     notifier.stubs(:id).returns(1)
@@ -354,7 +364,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
     changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
 
-    handler = Ladle::PullHandler.new(@pull_request, mock('notifier'))
+    handler = Ladle::PullHandler.new(mock('client'), mock('notifier'))
     resolved_stewards_registry = handler.send(:resolve_stewards_scope, registry, changed_files)
 
     expected_changes_view = Ladle::StewardChangesView.new(

@@ -42,6 +42,22 @@ class ChangedFilesTest < ActiveSupport::TestCase
     assert_equal [change1, change2, change4, change3], changed_files.file_changes_in(Pathname.new(""))
   end
 
+  test 'modified_stewards_files' do
+    changed_files = Ladle::ChangedFiles.new
+
+    added_stewards_file = build(:file_change, status: :added, file: "bob/loblaw/stewards.yml")
+    changed_files.add_file_change(added_stewards_file)
+    assert_equal [Pathname.new("bob/loblaw/stewards.yml")], changed_files.modified_stewards_files
+
+    removed_stewards_file = build(:file_change, status: :removed, file: "bob/loblaw/stewards.yml")
+    changed_files.add_file_change(removed_stewards_file)
+    assert_equal [Pathname.new("bob/loblaw/stewards.yml")], changed_files.modified_stewards_files
+
+    modified_stewards_file = build(:file_change, status: :modified, file: "bob/stewards.yml")
+    changed_files.add_file_change(modified_stewards_file)
+    assert_equal [Pathname.new("bob/loblaw/stewards.yml"), Pathname.new("bob/stewards.yml")], changed_files.modified_stewards_files
+  end
+
   test 'directories' do
     changed_files = Ladle::ChangedFiles.new
 
