@@ -117,10 +117,13 @@ module Ladle
         left_change_views = left_change_views.first unless left_change_views.nil?
         right_change_views = right_change_views.first unless right_change_views.nil?
 
-        # TODO - handle the case
-        raise "Handle this case" if ! left_change_views.nil? && !right_change_views.nil?
+        all_changes = [left_change_views, right_change_views].reject(&:nil?)
 
-        combined[stewards_file_path] = [left_change_views, right_change_views].reject(&:nil?)
+        if all_changes.size == 2 && all_changes.first.changes == all_changes.last.changes
+          combined[stewards_file_path] = [all_changes.first]
+        else
+          combined[stewards_file_path] = all_changes
+        end
       end
 
       combined

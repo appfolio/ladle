@@ -91,6 +91,96 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
+  test 'notifies steward from same file across branches' do
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
+
+    client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
+
+    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
+      stewards:
+        - github_username: someguy
+          include: file1.txt
+    YAML
+
+    client.add_stewards_file(path: 'stewards.yml', ref: 'branch_head', contents: <<-YAML)
+      stewards:
+        - github_username: someguy
+          include: file2.txt
+    YAML
+
+    base_changes = build(:steward_changes_view,
+                         stewards_file: 'stewards.yml',
+                         file_filter:   Ladle::FileFilter.new(
+                           include_patterns: ["file1.txt"]
+                         ),
+                         changes:       [
+                                          build(:file_change, status: :added, file: 'file1.txt', additions: 1)
+                                        ])
+
+    branch_changes = build(:steward_changes_view,
+                           stewards_file: 'stewards.yml',
+                           file_filter:   Ladle::FileFilter.new(
+                             include_patterns: ["file2.txt"]
+                           ),
+                           changes:       [
+                                            build(:file_change, status: :added, file: 'file2.txt', additions: 1)
+                                          ])
+
+    notifier = mock
+    notifier.expects(:notify)
+      .with(deep_hash({
+                        'someguy' => {
+                          'stewards.yml' => [
+                            base_changes,
+                            branch_changes,
+                          ],
+                        }}))
+
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+  end
+
+  test 'notifies steward from same file across branches - remove duplicates' do
+    changed_files = Ladle::ChangedFiles.new
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
+    changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
+
+    client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
+
+    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
+      stewards:
+        - github_username: someguy
+          include: file1.txt
+    YAML
+
+    client.add_stewards_file(path: 'stewards.yml', ref: 'branch_head', contents: <<-YAML)
+      stewards:
+        - github_username: someguy
+          include: file1.*
+    YAML
+
+    changes = build(:steward_changes_view,
+                    stewards_file: 'stewards.yml',
+                    file_filter:   Ladle::FileFilter.new(
+                      include_patterns: ["file1.txt"]
+                    ),
+                    changes:       [
+                                     build(:file_change, status: :added, file: 'file1.txt', additions: 1)
+                                   ])
+
+    notifier = mock
+    notifier.expects(:notify)
+      .with(deep_hash({
+                        'someguy' => {
+                          'stewards.yml' => [changes],
+                        }}))
+
+    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+  end
+
   test 'notifies old stewards' do
     changed_files = Ladle::ChangedFiles.new
     changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1))
