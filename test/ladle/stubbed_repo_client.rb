@@ -1,5 +1,16 @@
 module Ladle
   class StubbedRepoClient
+    class TreeDefinition
+      def initialize(ref, repo)
+        @ref = ref
+        @repo = repo
+      end
+
+      def file(path, contents)
+        @repo.add_stewards_file(ref: @ref, path: path, contents: contents)
+      end
+    end
+
     def initialize(pull_request_number, pull_request_info, changed_files)
       @pull_request_number = pull_request_number
       @pull_request_info   = pull_request_info
@@ -15,6 +26,10 @@ module Ladle
       raise "Ref #{ref.inspect} not in repo" unless repo_at_ref
 
       repo_at_ref[path] = contents
+    end
+
+    def define_tree(ref)
+      yield TreeDefinition.new(ref, self)
     end
 
     def contents(path:, ref:)

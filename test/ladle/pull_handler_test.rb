@@ -37,19 +37,22 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    client.add_stewards_file(path: 'sub/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - fadsfadsfadsfadsf
-    YAML
+    client.define_tree('base_head') do |tree|
 
-    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - github_username: bob
-          include: "**.rb"
-          exclude: "**.txt"
-        - xanderstrike
-    YAML
+      tree.file('sub/stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - fadsfadsfadsfadsf
+      YAML
+
+      tree.file('stewards.yml', <<-YAML)
+        stewards:
+          - github_username: bob
+            include: "**.rb"
+            exclude: "**.txt"
+          - xanderstrike
+      YAML
+    end
 
     expected_stewards_changes_view = build(:steward_changes_view,
                                            ref: 'base_head',
@@ -199,37 +202,37 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    # sub3/stewards.yml removed by branch
-    client.add_stewards_file(path: 'sub3/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - bob
-    YAML
+    client.define_tree('base_head') do |tree|
+      tree.file('sub3/stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - bob
+      YAML
 
-    # sub2/stewards.yml added by branch
-    client.add_stewards_file(path: 'sub2/stewards.yml', ref: 'branch_head', contents: <<-YAML)
-      stewards:
-        - hamburglar
-    YAML
+      tree.file('sub/stewards.yml', <<-YAML)
+        stewards:
+          - jeb
+      YAML
 
-    # sub/stewards.yml exists on both, changed by branch
-    client.add_stewards_file(path: 'sub/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - jeb
-    YAML
+      tree.file('stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - bob
+      YAML
+    end
 
-    client.add_stewards_file(path: 'sub/stewards.yml', ref: 'branch_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - fadsfadsfadsfadsf
-    YAML
+    client.define_tree('branch_head') do |tree|
+      tree.file('sub2/stewards.yml', <<-YAML)
+        stewards:
+          - hamburglar
+      YAML
 
-    # stewards.yml exists on base
-    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - bob
-    YAML
+      tree.file('sub/stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - fadsfadsfadsfadsf
+      YAML
+    end
 
     expected_stewards_changes_view = build(:steward_changes_view,
                                            ref: 'base_head',
@@ -307,16 +310,19 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    client.add_stewards_file(path: 'hello/kitty/what/is/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - bleh
-    YAML
+    client.define_tree('base_head') do |tree|
 
-    client.add_stewards_file(path: 'hello/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-    YAML
+      tree.file('hello/kitty/what/is/stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - bleh
+      YAML
+
+      tree.file('hello/stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+      YAML
+    end
 
     expected_stewards_changes_view = build(:steward_changes_view,
                                            ref:           'base_head',
@@ -355,15 +361,17 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    client.add_stewards_file(path: 'sub/stewards.yml', ref: 'base_head', contents: <<-YAML)
-      SOME WORDS
-    YAML
+    client.define_tree('base_head') do |tree|
+      tree.file('sub/stewards.yml', <<-YAML)
+        SOME WORDS
+      YAML
 
-    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - xanderstrike
-        - fadsfadsfadsfadsf
-    YAML
+      tree.file('stewards.yml', <<-YAML)
+        stewards:
+          - xanderstrike
+          - fadsfadsfadsfadsf
+      YAML
+    end
 
     expected_stewards_changes_view = {
       'stewards.yml' => [build(:steward_changes_view,
