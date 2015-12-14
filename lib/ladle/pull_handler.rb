@@ -53,7 +53,8 @@ module Ladle
       stewards_file = StewardsFileParser.parse(contents)
 
       stewards_file.stewards.each do |steward_config|
-        changes_view = Ladle::StewardChangesView.new(stewards_file: stewards_file_path,
+        changes_view = Ladle::StewardChangesView.new(ref: sha,
+                                                     stewards_file: stewards_file_path,
                                                      file_filter: steward_config.file_filter)
 
         stewards_user_tree_map[steward_config.github_username] ||= {}

@@ -52,6 +52,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     YAML
 
     expected_stewards_changes_view = build(:steward_changes_view,
+                                           ref: 'base_head',
                                            stewards_file: 'stewards.yml',
                                            changes:       [
                                                             build(:file_change, status: :added, file: 'one.rb', additions: 1),
@@ -59,6 +60,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                           ])
 
     expected_sub_stewards_changes_view = build(:steward_changes_view,
+                                               ref: 'base_head',
                                                stewards_file: 'sub/stewards.yml',
                                                changes:       [
                                                                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
@@ -75,6 +77,7 @@ class PullHandlerTest < ActiveSupport::TestCase
               },
               'bob'               => {
                 'stewards.yml' => [build(:steward_changes_view,
+                                         ref: 'base_head',
                                          stewards_file: 'stewards.yml',
                                          file_filter:   Ladle::FileFilter.new(
                                            include_patterns: ["**.rb"],
@@ -112,6 +115,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     YAML
 
     base_changes = build(:steward_changes_view,
+                         ref: 'base_head',
                          stewards_file: 'stewards.yml',
                          file_filter:   Ladle::FileFilter.new(
                            include_patterns: ["file1.txt"]
@@ -121,6 +125,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                         ])
 
     branch_changes = build(:steward_changes_view,
+                           ref: 'branch_head',
                            stewards_file: 'stewards.yml',
                            file_filter:   Ladle::FileFilter.new(
                              include_patterns: ["file2.txt"]
@@ -163,6 +168,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     YAML
 
     changes = build(:steward_changes_view,
+                    ref: 'base_head',
                     stewards_file: 'stewards.yml',
                     file_filter:   Ladle::FileFilter.new(
                       include_patterns: ["file1.txt"]
@@ -226,6 +232,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     YAML
 
     expected_stewards_changes_view = build(:steward_changes_view,
+                                           ref: 'base_head',
                                            stewards_file: 'stewards.yml',
                                            changes:       [
                                                             build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
@@ -238,6 +245,7 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                           ])
 
     expected_sub_stewards_changes_view = build(:steward_changes_view,
+                                               ref:           'branch_head',
                                                stewards_file: 'sub/stewards.yml',
                                                changes:       [
                                                                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
@@ -245,13 +253,15 @@ class PullHandlerTest < ActiveSupport::TestCase
                                                               ])
 
     expected_sub2_stewards_changes_view = build(:steward_changes_view,
-                                               stewards_file: 'sub2/stewards.yml',
-                                               changes:       [
-                                                                build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
-                                                                build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1)
-                                                              ])
+                                                ref:           'branch_head',
+                                                stewards_file: 'sub2/stewards.yml',
+                                                changes:       [
+                                                                 build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
+                                                                 build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1)
+                                                               ])
 
     expected_sub3_stewards_changes_view = build(:steward_changes_view,
+                                                ref:           'base_head',
                                                 stewards_file: 'sub3/stewards.yml',
                                                 changes:       [
                                                                  build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
@@ -273,7 +283,13 @@ class PullHandlerTest < ActiveSupport::TestCase
                 'sub3/stewards.yml' => [expected_sub3_stewards_changes_view]
               },
               'jeb'               => {
-                'sub/stewards.yml' => [expected_sub_stewards_changes_view]
+                'sub/stewards.yml' => [build(:steward_changes_view,
+                                             ref:           'base_head',
+                                             stewards_file: 'sub/stewards.yml',
+                                             changes:       [
+                                                              build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
+                                                              build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1)
+                                                            ])]
               },
               'hamburglar'        => {
                 'sub2/stewards.yml' => [expected_sub2_stewards_changes_view]
@@ -303,17 +319,19 @@ class PullHandlerTest < ActiveSupport::TestCase
     YAML
 
     expected_stewards_changes_view = build(:steward_changes_view,
-                                    stewards_file: 'hello/stewards.yml',
-                                    changes:       [
-                                                     build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
-                                                     build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-                                                   ])
+                                           ref:           'base_head',
+                                           stewards_file: 'hello/stewards.yml',
+                                           changes:       [
+                                                            build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
+                                                            build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
+                                                          ])
 
     expected_sub_stewards_changes_view = build(:steward_changes_view,
-                                                  stewards_file: 'hello/kitty/what/is/stewards.yml',
-                                                  changes:       [
-                                                                   build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-                                                                 ])
+                                               ref:           'base_head',
+                                               stewards_file: 'hello/kitty/what/is/stewards.yml',
+                                               changes:       [
+                                                                build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
+                                                              ])
 
     notifier = mock
     notifier.expects(:notify)
@@ -349,11 +367,12 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     expected_stewards_changes_view = {
       'stewards.yml' => [build(:steward_changes_view,
-                              stewards_file: 'stewards.yml',
-                              changes:       [
-                                               build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                                               build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                                             ])]
+                               ref:           'base_head',
+                               stewards_file: 'stewards.yml',
+                               changes:       [
+                                                build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                                                build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                                              ])]
     }
 
     notifier = mock
@@ -386,15 +405,16 @@ class PullHandlerTest < ActiveSupport::TestCase
     notifier.stubs(:id).returns(1)
     notifier.expects(:notify)
       .with(deep_hash({
-              'xanderstrike' => {
-                'hello/stewards.yml' => [build(:steward_changes_view,
-                                              stewards_file: 'hello/stewards.yml',
-                                              changes:       [
-                                                               build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
-                                                               build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
-                                                             ])],
-              },
-            }))
+                        'xanderstrike' => {
+                          'hello/stewards.yml' => [build(:steward_changes_view,
+                                                         ref:           'base_head',
+                                                         stewards_file: 'hello/stewards.yml',
+                                                         changes:       [
+                                                                          build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
+                                                                          build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
+                                                                        ])],
+                        },
+                      }))
 
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
@@ -419,7 +439,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     handler = Ladle::PullHandler.new(mock('client'), mock('notifier'))
     resolved_stewards_registry = handler.send(:resolve_stewards_scope, registry, changed_files)
 
-    expected_changes_view = Ladle::StewardChangesView.new(
+    expected_changes_view = build(:steward_changes_view,
       stewards_file: 'stewards.yml',
       changes:       [
                        build(:file_change, file: 'stewards.yml'),
@@ -432,7 +452,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     assert_equal [expected_changes_view], resolved_stewards_registry['xanderstrike']['stewards.yml']
 
-    expected_changes_view = Ladle::StewardChangesView.new(
+    expected_changes_view = build(:steward_changes_view,
       stewards_file: 'sub/stewards.yml',
       changes:       [
                        build(:file_change, file: 'sub/marine.rb'),
@@ -441,7 +461,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     assert_equal [expected_changes_view], resolved_stewards_registry['xanderstrike']['sub/stewards.yml']
 
-    expected_changes_view = Ladle::StewardChangesView.new(
+    expected_changes_view = build(:steward_changes_view,
       stewards_file: 'sub3/stewards.yml',
       changes:       [
                        build(:file_change, file: 'sub3/stewards.yml')

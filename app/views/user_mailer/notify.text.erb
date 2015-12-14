@@ -12,7 +12,7 @@ You were notified of this pull request because of the following changes:
 
 <% @stewards_file_map.each do |stewards_file_path, steward_change_views| %>
   <% steward_change_views.each do |steward_change_view| %>
-  Changes monitored by <%= steward_change_view.stewards_file %>:
+  Changes monitored by <%= steward_change_view.ref %>/<%= steward_change_view.stewards_file %>:
 
   <% steward_change_view.changes.each do |change| %>
     * <%= change.status_initial %> <%= change.file %> (<%= change.changes_count %>)
