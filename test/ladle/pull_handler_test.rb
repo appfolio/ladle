@@ -427,14 +427,23 @@ class PullHandlerTest < ActiveSupport::TestCase
     Ladle::PullHandler.new(client, notifier).handle(@pull_request)
   end
 
-  test "resolve_stewards_scope" do
-    registry = {
-      'xanderstrike' => {
-        'stewards.yml'      => [build(:steward_changes_view, stewards_file: 'stewards.yml')],
-        'sub/stewards.yml'  => [build(:steward_changes_view, stewards_file: 'sub/stewards.yml')],
-        'sub3/stewards.yml' => [build(:steward_changes_view, stewards_file: 'sub3/stewards.yml')],
-      }
-    }
+  test "collect_changes" do
+    tree = Ladle::PullHandler::StewardTree.new('xanderstrike')
+
+    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
+                                           stewards_file: 'stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new))
+
+    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
+                                           stewards_file: 'sub/stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new))
+
+    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
+                                           stewards_file: 'sub3/stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new))
+
+    stewards_trees = {}
+    stewards_trees['xanderstrike'] = tree
 
     changed_files = Ladle::ChangedFiles.new
     changed_files.add_file_change(build(:file_change, file: 'stewards.yml'))
@@ -445,7 +454,7 @@ class PullHandlerTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
 
     handler = Ladle::PullHandler.new(mock('client'), mock('notifier'))
-    resolved_stewards_registry = handler.send(:resolve_stewards_scope, registry, changed_files)
+    resolved_stewards_registry = handler.send(:collect_changes, stewards_trees, changed_files)
 
     expected_changes_view = build(:steward_changes_view,
       stewards_file: 'stewards.yml',

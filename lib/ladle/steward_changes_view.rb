@@ -11,18 +11,6 @@ module Ladle
       @changes       = changes || []
     end
 
-    def empty?
-      @changes.empty?
-    end
-
-    def add_file_changes(file_changes)
-      file_changes.each do |file_change|
-        if @file_filter.include?(file_change.file.relative_path_from(@stewards_file.dirname))
-          @changes << file_change
-        end
-      end
-    end
-
     def ==(other)
       @ref == other.ref &&
         @stewards_file.to_s == other.stewards_file.to_s &&

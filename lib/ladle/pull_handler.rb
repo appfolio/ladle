@@ -1,5 +1,5 @@
 require 'ladle/stewards_file_parser'
-require 'ladle/steward_changes_view'
+require 'ladle/steward_rules'
 
 module Ladle
   class PullHandler
@@ -11,15 +11,11 @@ module Ladle
     def handle(pull_request)
       pr_info = @client.pull_request(pull_request.number)
 
-      pull_request_files = @client.pull_request_files(pull_request.number)
+      pr_files = @client.pull_request_files(pull_request.number)
 
-      stewards_from_base = read_stewards(pull_request_files, pr_info.base_sha)
-      stewards_from_base = resolve_stewards_scope(stewards_from_base, pull_request_files)
+      stewards_trees = collect_stewards_rules(pull_request, pr_info, pr_files)
 
-      stewards_from_head = read_new_stewards(pull_request_files, pr_info.head_sha)
-      stewards_from_head = resolve_stewards_scope(stewards_from_head, pull_request_files)
-
-      stewards_registry = combine_stewards_tree_maps(stewards_from_base, stewards_from_head)
+      stewards_registry = collect_changes(stewards_trees, pr_files)
 
       if stewards_registry.empty?
         Rails.logger.info('No stewards found. Doing nothing.')
@@ -31,34 +27,91 @@ module Ladle
 
     private
 
-    def read_new_stewards(pull_request_files, base_head)
-      stewards_user_tree_map = {} #StewardsUserTreeMap.new
-      pull_request_files.modified_stewards_files.each do |stewards_file_path|
-        register_stewards(stewards_user_tree_map, stewards_file_path, base_head)
-      end
-      stewards_user_tree_map
-    end
+    def collect_stewards_rules(pull_request, pr_info, pr_files)
+      rules = {}
 
-    def read_stewards(pull_request_files, pr_head)
-      stewards_user_tree_map = {} #StewardsUserTreeMap.new
-      pull_request_files.directories.each do |directory|
-        register_stewards(stewards_user_tree_map, directory.join('stewards.yml'), pr_head)
+      pr_files.directories.each do |directory|
+        register_stewards(rules, directory.join('stewards.yml'), pr_info.base_sha)
       end
 
-      stewards_user_tree_map
+      pr_files.modified_stewards_files.each do |stewards_file_path|
+        register_stewards(rules, stewards_file_path, pr_info.head_sha)
+      end
+
+      rules
     end
 
-    def register_stewards(stewards_user_tree_map, stewards_file_path, sha)
+    class ChangesView
+      attr_reader :paths
+
+      RulesChanges = Struct.new(:rules, :changes)
+
+      def initialize
+        @paths = {}
+      end
+
+      def empty?
+        @paths.values.all?(&:empty?)
+      end
+
+      def add_changes(rules, changes)
+        @paths[rules.stewards_file.to_s] ||= []
+
+        add_changes_to(@paths[rules.stewards_file.to_s], rules, changes)
+      end
+
+      private
+
+      def add_changes_to(rules_and_changes_collection, rules, changes)
+        changes_already_exist = rules_and_changes_collection.any? do |rules_changes|
+          rules_changes.changes == changes
+        end
+
+        unless changes_already_exist
+          rules_and_changes_collection << RulesChanges.new(rules, changes)
+        end
+      end
+    end
+
+    class StewardTree
+      attr_reader :github_username
+
+      def initialize(github_username)
+        @github_username = github_username
+        @rules           = []
+      end
+
+      def add_rules(rules)
+        @rules << rules
+      end
+
+      def changes(pull_request_files)
+        changes_view = ChangesView.new
+
+        @rules.each do |rules|
+          file_changes = pull_request_files.file_changes_in(rules.stewards_file.dirname)
+          file_changes = rules.select_matching_file_changes(file_changes)
+
+          unless file_changes.empty?
+            changes_view.add_changes(rules, file_changes)
+          end
+        end
+
+        changes_view
+      end
+    end
+
+    def register_stewards(stewards_rules_map, stewards_file_path, sha)
       contents = @client.contents(path: stewards_file_path.to_s, ref: sha)
       stewards_file = StewardsFileParser.parse(contents)
 
       stewards_file.stewards.each do |steward_config|
-        changes_view = Ladle::StewardChangesView.new(ref: sha,
-                                                     stewards_file: stewards_file_path,
-                                                     file_filter: steward_config.file_filter)
+        rules = Ladle::StewardRules.new(ref:           sha,
+                                        stewards_file: stewards_file_path,
+                                        file_filter:   steward_config.file_filter)
 
-        stewards_user_tree_map[steward_config.github_username] ||= {}
-        stewards_user_tree_map[steward_config.github_username][stewards_file_path.to_s] = [changes_view]
+        stewards_rules_map[steward_config.github_username] ||= StewardTree.new(steward_config.github_username)
+        stewards_rules_map[steward_config.github_username].add_rules(rules)
       end
     rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
@@ -66,68 +119,32 @@ module Ladle
       Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
-    def select_non_empty_change_views(steward_tree, pull_request_files)
-      steward_tree.reject do |stewards_file_path, change_views|
-        change_view = change_views.first
-        file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
-        change_view.add_file_changes(file_changes)
-        change_view.empty?
-      end
-    end
-
-    def resolve_stewards_scope(stewards_user_tree_map, pull_request_files)
+    def collect_changes(stewards_trees, pull_request_files)
       output = {}
 
-      stewards_user_tree_map.each do |github_username, steward_tree|
-        non_empty_file_map = select_non_empty_change_views(steward_tree, pull_request_files)
+      stewards_trees.each do |github_username, steward_tree|
+        changes_view = steward_tree.changes(pull_request_files)
 
-        unless non_empty_file_map.empty?
-          output[github_username] = non_empty_file_map
+        unless changes_view.empty?
+          output[github_username] = map_to_old_stewards_tree_change_view(changes_view)
         end
       end
 
       output
     end
 
-    def combine_stewards_tree_maps(left_steward_tree_map, right_steward_tree_map)
-      combined = {}
-
-      github_usernames = (left_steward_tree_map.keys + right_steward_tree_map.keys).uniq
-      github_usernames.each do |github_username|
-        left_steward_tree  = left_steward_tree_map[github_username]
-        right_steward_tree = right_steward_tree_map[github_username]
-
-        combined[github_username] = combine_steward_trees(left_steward_tree, right_steward_tree)
-      end
-
-      combined
-    end
-
-    def combine_steward_trees(left_steward_tree, right_steward_tree)
-      if left_steward_tree.nil? || right_steward_tree.nil?
-        return right_steward_tree.presence || left_steward_tree.presence
-      end
-
-      combined = {}
-
-      all_stewards_file_paths = (left_steward_tree.keys + right_steward_tree.keys).uniq
-      all_stewards_file_paths.each do |stewards_file_path|
-        left_change_views  = left_steward_tree[stewards_file_path]
-        right_change_views = right_steward_tree[stewards_file_path]
-
-        left_change_views = left_change_views.first unless left_change_views.nil?
-        right_change_views = right_change_views.first unless right_change_views.nil?
-
-        all_changes = [left_change_views, right_change_views].reject(&:nil?)
-
-        if all_changes.size == 2 && all_changes.first.changes == all_changes.last.changes
-          combined[stewards_file_path] = [all_changes.first]
-        else
-          combined[stewards_file_path] = all_changes
+    def map_to_old_stewards_tree_change_view(changes_view)
+      old_datastructure = {}
+      changes_view.paths.each do |stewards_file_path, rules_with_changes_list|
+        old_datastructure[stewards_file_path] = rules_with_changes_list.map do |rule_with_changes|
+          Ladle::StewardChangesView.new(ref:           rule_with_changes.rules.ref,
+                                        stewards_file: rule_with_changes.rules.stewards_file,
+                                        file_filter:   rule_with_changes.rules.file_filter,
+                                        changes:       rule_with_changes.changes)
         end
       end
 
-      combined
+      old_datastructure
     end
   end
 end

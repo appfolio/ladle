@@ -1,5 +1,4 @@
 require 'test_helper'
-require 'ladle/file_filter'
 
 class StewardChangesViewTest < ActiveSupport::TestCase
 
@@ -20,26 +19,5 @@ class StewardChangesViewTest < ActiveSupport::TestCase
     assert changes_view1.eql?(changes_view2)
     assert changes_view2.eql?(changes_view1)
     assert changes_view1.hash, changes_view2.hash
-  end
-
-  test 'add_file_changes' do
-    view = build(:steward_changes_view,
-                 stewards_file: "base/stewards.yml",
-                 file_filter: Ladle::FileFilter.new(
-                   include_patterns: ["dir1/*.rb"],
-                   exclude_patterns: ["dir1/dir2/dir3/file.rb"]
-                 ))
-
-    file_changes = [
-      build(:file_change, file: "base/dir1/file.rb"),
-      build(:file_change, file: "base/dir1/dir2/dir3/file.rb"),
-      build(:file_change, file: "base/dir1/dir2/dir3/file.txt"),
-      build(:file_change, file: "base/dir1/dir2/dir3/file2.rb"),
-      build(:file_change, file: "base/dir2/teehee.rb"),
-    ]
-
-    view.add_file_changes(file_changes)
-
-    assert_equal [build(:file_change, file: "base/dir1/file.rb"), build(:file_change, file: "base/dir1/dir2/dir3/file2.rb")], view.changes
   end
 end
