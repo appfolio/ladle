@@ -4,6 +4,8 @@ require 'ladle/pull_handler'
 require 'ladle/pull_request_info'
 require 'ladle/changed_files'
 require 'ladle/file_filter'
+require 'ladle/steward_tree'
+require 'ladle/steward_rules'
 
 require 'ladle/stubbed_repo_client'
 
@@ -428,7 +430,7 @@ class PullHandlerTest < ActiveSupport::TestCase
   end
 
   test "collect_changes" do
-    tree = Ladle::PullHandler::StewardTree.new('xanderstrike')
+    tree = Ladle::StewardTree.new('xanderstrike')
 
     tree.add_rules(Ladle::StewardRules.new(ref:           'base',
                                            stewards_file: 'stewards.yml',

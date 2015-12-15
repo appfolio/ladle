@@ -1,5 +1,7 @@
 require 'ladle/stewards_file_parser'
 require 'ladle/steward_rules'
+require 'ladle/steward_tree'
+require 'ladle/steward_changes_view'
 
 module Ladle
   class PullHandler
@@ -41,66 +43,6 @@ module Ladle
       rules
     end
 
-    class ChangesView
-      attr_reader :paths
-
-      RulesChanges = Struct.new(:rules, :changes)
-
-      def initialize
-        @paths = {}
-      end
-
-      def empty?
-        @paths.values.all?(&:empty?)
-      end
-
-      def add_changes(rules, changes)
-        @paths[rules.stewards_file.to_s] ||= []
-
-        add_changes_to(@paths[rules.stewards_file.to_s], rules, changes)
-      end
-
-      private
-
-      def add_changes_to(rules_and_changes_collection, rules, changes)
-        changes_already_exist = rules_and_changes_collection.any? do |rules_changes|
-          rules_changes.changes == changes
-        end
-
-        unless changes_already_exist
-          rules_and_changes_collection << RulesChanges.new(rules, changes)
-        end
-      end
-    end
-
-    class StewardTree
-      attr_reader :github_username
-
-      def initialize(github_username)
-        @github_username = github_username
-        @rules           = []
-      end
-
-      def add_rules(rules)
-        @rules << rules
-      end
-
-      def changes(pull_request_files)
-        changes_view = ChangesView.new
-
-        @rules.each do |rules|
-          file_changes = pull_request_files.file_changes_in(rules.stewards_file.dirname)
-          file_changes = rules.select_matching_file_changes(file_changes)
-
-          unless file_changes.empty?
-            changes_view.add_changes(rules, file_changes)
-          end
-        end
-
-        changes_view
-      end
-    end
-
     def register_stewards(stewards_rules_map, stewards_file_path, sha)
       contents = @client.contents(path: stewards_file_path.to_s, ref: sha)
       stewards_file = StewardsFileParser.parse(contents)
@@ -135,13 +77,14 @@ module Ladle
 
     def map_to_old_stewards_tree_change_view(changes_view)
       old_datastructure = {}
-      changes_view.paths.each do |stewards_file_path, rules_with_changes_list|
-        old_datastructure[stewards_file_path] = rules_with_changes_list.map do |rule_with_changes|
-          Ladle::StewardChangesView.new(ref:           rule_with_changes.rules.ref,
-                                        stewards_file: rule_with_changes.rules.stewards_file,
-                                        file_filter:   rule_with_changes.rules.file_filter,
-                                        changes:       rule_with_changes.changes)
-        end
+      changes_view.each do |rules, changes|
+        old_change_view = Ladle::StewardChangesView.new(ref:           rules.ref,
+                                                        stewards_file: rules.stewards_file,
+                                                        file_filter:   rules.file_filter,
+                                                        changes:       changes)
+
+        old_datastructure[rules.stewards_file.to_s] ||= []
+        old_datastructure[rules.stewards_file.to_s] << old_change_view
       end
 
       old_datastructure
