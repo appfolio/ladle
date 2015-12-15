@@ -444,6 +444,10 @@ class PullHandlerTest < ActiveSupport::TestCase
                                            stewards_file: 'sub3/stewards.yml',
                                            file_filter:   Ladle::FileFilter.new))
 
+    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
+                                           stewards_file: 'sub4/stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new))
+
     stewards_trees = {}
     stewards_trees['xanderstrike'] = tree
 
