@@ -10,15 +10,13 @@ You can view, comment on, or merge this pull request online at:
 
 You were notified of this pull request because of the following changes:
 
-<% @stewards_file_map.each do |stewards_file_path, steward_change_views| %>
-  <% steward_change_views.each do |steward_change_view| %>
-  Changes monitored by <%= steward_change_view.ref %>/<%= steward_change_view.stewards_file %>:
+<% @changes_view.each do |rules, changes| %>
+  Changes monitored by <%= rules.ref %>/<%= rules.stewards_file %>:
 
-  <% steward_change_view.changes.each do |change| %>
+  <% changes.each do |change| %>
     * <%= change.status_initial %> <%= change.file %> (<%= change.changes_count %>)
   <% end %>
 
-  <% end %>
 <% end %>
 ---------------------------------------------
 You received this email from Ladle for account <%= @user.github_username %>. Update your notification settings at <%= edit_user_settings_url %>.

@@ -2,11 +2,9 @@ require 'ladle/changes_view'
 
 module Ladle
   class StewardTree
-    attr_reader :github_username
 
-    def initialize(github_username)
-      @github_username = github_username
-      @rules           = []
+    def initialize
+      @rules = []
     end
 
     def add_rules(rules)

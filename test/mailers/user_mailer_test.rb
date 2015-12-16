@@ -14,7 +14,7 @@ class UserMailerTest < ActionMailer::TestCase
                                 nil,
                                 nil
                               ),
-                              stewards_file_map: Ladle::TestData.create_steward_changes_views).deliver_now
+                              changes_view: Ladle::TestData.create_changes_view).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?
 
@@ -33,7 +33,7 @@ class UserMailerTest < ActionMailer::TestCase
                                 'Hey ho!',
                                 'These changes are luminous',
                               ),
-                              stewards_file_map: Ladle::TestData.create_steward_changes_views).deliver_now
+                              changes_view: Ladle::TestData.create_changes_view).deliver_now
 
     assert_not ActionMailer::Base.deliveries.empty?
 

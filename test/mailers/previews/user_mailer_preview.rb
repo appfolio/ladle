@@ -13,7 +13,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         "We made these changes because things needed to be changed and we noticed and we had the means to make the changes, so we did."
                       ),
-                      stewards_file_map: Ladle::TestData.create_steward_changes_views)
+                      changes_view: Ladle::TestData.create_changes_view)
   end
 
   def notify_without_description
@@ -24,7 +24,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         nil
                       ),
-                      stewards_file_map: Ladle::TestData.create_steward_changes_views)
+                      changes_view: Ladle::TestData.create_changes_view)
 
   end
 end

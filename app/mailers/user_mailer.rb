@@ -9,10 +9,10 @@ class UserMailer < ApplicationMailer
     end
   end
 
-  def notify(user:, repository:, pull_request:, stewards_file_map:)
+  def notify(user:, repository:, pull_request:, changes_view:)
     @pull_request = PullRequestPresenter.new(pull_request)
-    @stewards_file_map = stewards_file_map
-    @user = user
+    @changes_view = changes_view
+    @user         = user
 
     mail(to:      user.email,
          subject: "[#{repository}] Ladle Alert: #{@pull_request.title}")

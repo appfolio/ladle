@@ -6,9 +6,9 @@ require 'ladle/test_data'
 class StewardNotifierTest < ActionController::TestCase
   setup do
     @steward_changes_views = {
-      'xanderstrike' => Ladle::TestData.create_steward_changes_views,
-      'counterstrike'=> Ladle::TestData.create_steward_changes_views,
-      'boop'         => Ladle::TestData.create_steward_changes_views
+      'xanderstrike' => Ladle::TestData.create_changes_view,
+      'counterstrike'=> Ladle::TestData.create_changes_view,
+      'boop'         => Ladle::TestData.create_changes_view
     }
     @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
     @notifier = Ladle::StewardNotifier.new('XanderStrike/test', @pull_request)

@@ -14,7 +14,7 @@ class StewardTreeTest < ActiveSupport::TestCase
     changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
     changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
 
-    tree = Ladle::StewardTree.new('xanderstrike')
+    tree = Ladle::StewardTree.new
 
     sub_rules = Ladle::StewardRules.new(ref:           'base',
                                         stewards_file: 'sub/stewards.yml')

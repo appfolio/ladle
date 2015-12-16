@@ -7,11 +7,11 @@ module Ladle
 
     def notify(stewards_changes)
       notified_users = []
-      stewards_changes.each do |github_username, steward_changes_views|
+      stewards_changes.each do |github_username, changes_view|
         user = User.find_by_github_username(github_username)
 
         if user && ! user_has_been_notified?(user)
-          send_email(user, steward_changes_views)
+          send_email(user, changes_view)
           notified_users << user
         end
       end
@@ -25,8 +25,8 @@ module Ladle
       user.notifications.where(pull_request: @pull_request).exists?
     end
 
-    def send_email(user, stewards_file_map)
-      UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, stewards_file_map: stewards_file_map).deliver_now
+    def send_email(user, changes_view)
+      UserMailer.notify(user: user, repository: @repository_name, pull_request: @pull_request, changes_view: changes_view).deliver_now
     end
 
     def create_notification(users)

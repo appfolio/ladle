@@ -1,7 +1,6 @@
 require 'ladle/stewards_file_parser'
 require 'ladle/steward_rules'
 require 'ladle/steward_tree'
-require 'ladle/steward_changes_view'
 
 module Ladle
   class PullHandler
@@ -15,7 +14,7 @@ module Ladle
 
       pr_files = @client.pull_request_files(pull_request.number)
 
-      stewards_trees = collect_stewards_rules(pull_request, pr_info, pr_files)
+      stewards_trees = collect_stewards_rules(pr_info, pr_files)
 
       stewards_registry = collect_changes(stewards_trees, pr_files)
 
@@ -29,7 +28,7 @@ module Ladle
 
     private
 
-    def collect_stewards_rules(pull_request, pr_info, pr_files)
+    def collect_stewards_rules(pr_info, pr_files)
       rules = {}
 
       pr_files.directories.each do |directory|
@@ -52,7 +51,7 @@ module Ladle
                                         stewards_file: stewards_file_path,
                                         file_filter:   steward_config.file_filter)
 
-        stewards_rules_map[steward_config.github_username] ||= StewardTree.new(steward_config.github_username)
+        stewards_rules_map[steward_config.github_username] ||= StewardTree.new
         stewards_rules_map[steward_config.github_username].add_rules(rules)
       end
     rescue Ladle::RemoteFileNotFound
@@ -68,26 +67,11 @@ module Ladle
         changes_view = steward_tree.changes(pull_request_files)
 
         unless changes_view.empty?
-          output[github_username] = map_to_old_stewards_tree_change_view(changes_view)
+          output[github_username] = changes_view
         end
       end
 
       output
-    end
-
-    def map_to_old_stewards_tree_change_view(changes_view)
-      old_datastructure = {}
-      changes_view.each do |rules, changes|
-        old_change_view = Ladle::StewardChangesView.new(ref:           rules.ref,
-                                                        stewards_file: rules.stewards_file,
-                                                        file_filter:   rules.file_filter,
-                                                        changes:       changes)
-
-        old_datastructure[rules.stewards_file.to_s] ||= []
-        old_datastructure[rules.stewards_file.to_s] << old_change_view
-      end
-
-      old_datastructure
     end
   end
 end

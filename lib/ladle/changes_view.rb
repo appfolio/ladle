@@ -12,6 +12,12 @@ module Ladle
       @paths.values.all?(&:empty?)
     end
 
+    def ==(other)
+      @paths == other.paths
+    end
+
+    alias eql? ==
+
     def each
       sorted_paths = @paths.keys.sort
       sorted_paths.each do |path_key|
@@ -28,6 +34,10 @@ module Ladle
 
       add_changes_to(@paths[rules.stewards_file.to_s], rules, changes)
     end
+
+    protected
+
+    attr_reader :paths
 
     private
 
