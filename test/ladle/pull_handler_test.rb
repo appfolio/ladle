@@ -472,23 +472,23 @@ class PullHandlerTest < ActiveSupport::TestCase
   end
 
   test "collect_changes" do
-    tree = Ladle::StewardTree.new
+    tree = Ladle::StewardTree.new([
+      Ladle::StewardRules.new(ref:           'base',
+                              stewards_file: 'stewards.yml',
+                              file_filter:   Ladle::FileFilter.new),
 
-    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
-                                           stewards_file: 'stewards.yml',
-                                           file_filter:   Ladle::FileFilter.new))
+      Ladle::StewardRules.new(ref:           'base',
+                              stewards_file: 'sub/stewards.yml',
+                              file_filter:   Ladle::FileFilter.new),
 
-    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
-                                           stewards_file: 'sub/stewards.yml',
-                                           file_filter:   Ladle::FileFilter.new))
+      Ladle::StewardRules.new(ref:           'base',
+                              stewards_file: 'sub3/stewards.yml',
+                              file_filter:   Ladle::FileFilter.new),
 
-    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
-                                           stewards_file: 'sub3/stewards.yml',
-                                           file_filter:   Ladle::FileFilter.new))
-
-    tree.add_rules(Ladle::StewardRules.new(ref:           'base',
-                                           stewards_file: 'sub4/stewards.yml',
-                                           file_filter:   Ladle::FileFilter.new))
+      Ladle::StewardRules.new(ref:           'base',
+                              stewards_file: 'sub4/stewards.yml',
+                              file_filter:   Ladle::FileFilter.new)
+    ])
 
     stewards_trees = {}
     stewards_trees['xanderstrike'] = tree

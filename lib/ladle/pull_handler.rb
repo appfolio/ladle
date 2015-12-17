@@ -51,8 +51,10 @@ module Ladle
                                         stewards_file: stewards_file_path,
                                         file_filter:   steward_config.file_filter)
 
-        stewards_rules_map[steward_config.github_username] ||= StewardTree.new
-        stewards_rules_map[steward_config.github_username].add_rules(rules)
+        steward_tree = stewards_rules_map[steward_config.github_username] || StewardTree.new
+        steward_tree = steward_tree.add_rules(rules)
+
+        stewards_rules_map[steward_config.github_username] = steward_tree
       end
     rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
