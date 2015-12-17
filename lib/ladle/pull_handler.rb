@@ -1,5 +1,6 @@
 require 'ladle/stewards_file_parser'
-require 'ladle/steward_changes_view'
+require 'ladle/steward_rules'
+require 'ladle/steward_tree'
 
 module Ladle
   class PullHandler
@@ -11,14 +12,11 @@ module Ladle
     def handle(pull_request)
       pr_info = @client.pull_request(pull_request.number)
 
-      pull_request_files = @client.pull_request_files(pull_request.number)
+      pr_files = @client.pull_request_files(pull_request.number)
 
-      stewards_registry = {}
+      stewards_trees = collect_stewards_rules(pr_info, pr_files)
 
-      read_current_stewards(stewards_registry, pull_request_files, pr_info.head_sha)
-      read_old_stewards(stewards_registry, pull_request_files, pr_info.base_sha)
-
-      collect_files(stewards_registry, pull_request_files)
+      stewards_registry = collect_changes(stewards_trees, pr_files)
 
       if stewards_registry.empty?
         Rails.logger.info('No stewards found. Doing nothing.')
@@ -30,29 +28,31 @@ module Ladle
 
     private
 
-    def read_current_stewards(registry, pull_request_files, pr_head)
-      pull_request_files.directories.each do |directory|
-        register_stewards(registry, directory.join('stewards.yml'), pr_head)
+    def collect_stewards_rules(pr_info, pr_files)
+      rules = {}
+
+      pr_files.directories.each do |directory|
+        register_stewards(rules, directory.join('stewards.yml'), pr_info.base_sha)
       end
+
+      pr_files.modified_stewards_files.each do |stewards_file_path|
+        register_stewards(rules, stewards_file_path, pr_info.head_sha)
+      end
+
+      rules
     end
 
-    def read_old_stewards(registry, pull_request_files, parent_head)
-      pull_request_files.modified_stewards_files.each do |stewards_file_path|
-        register_stewards(registry, stewards_file_path, parent_head)
-      end
-    end
-
-    def register_stewards(registry, stewards_file_path, sha)
+    def register_stewards(stewards_rules_map, stewards_file_path, sha)
       contents = @client.contents(path: stewards_file_path.to_s, ref: sha)
       stewards_file = StewardsFileParser.parse(contents)
 
       stewards_file.stewards.each do |steward_config|
-        registry[steward_config.github_username] ||= []
+        rules = Ladle::StewardRules.new(ref:           sha,
+                                        stewards_file: stewards_file_path,
+                                        file_filter:   steward_config.file_filter)
 
-        changes_view = Ladle::StewardChangesView.new(stewards_file: stewards_file_path,
-                                                     file_filter: steward_config.file_filter)
-
-        registry[steward_config.github_username] << changes_view
+        stewards_rules_map[steward_config.github_username] ||= StewardTree.new
+        stewards_rules_map[steward_config.github_username].add_rules(rules)
       end
     rescue Ladle::RemoteFileNotFound
       # Ignore - stewards files don't have to exist
@@ -60,21 +60,18 @@ module Ladle
       Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
-    def collect_files(stewards_registry, pull_request_files)
-      stewards_registry.each_value do |steward_change_views|
-        steward_change_views.each do |change_view|
-          file_changes = pull_request_files.file_changes_in(change_view.stewards_file.dirname)
-          change_view.add_file_changes(file_changes)
-        end
+    def collect_changes(stewards_trees, pull_request_files)
+      output = {}
 
-        steward_change_views.reject! do |change_view|
-          change_view.empty?
+      stewards_trees.each do |github_username, steward_tree|
+        changes_view = steward_tree.changes(pull_request_files)
+
+        unless changes_view.empty?
+          output[github_username] = changes_view
         end
       end
 
-      stewards_registry.reject! do |_, steward_change_views|
-        steward_change_views.empty?
-      end
+      output
     end
   end
 end

@@ -62,6 +62,7 @@ group :test do
   gem 'webmock'
   gem 'coveralls', require: false
   gem 'rugged', require: false
+  gem 'hashdiff', '0.2.2'
 end
 
 

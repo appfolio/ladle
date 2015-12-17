@@ -1,7 +1,7 @@
 # Preview all emails at http://localhost:3000/rails/mailers/user_mailer
-class UserMailerPreview < ActionMailer::Preview
-  include FactoryGirl::Syntax::Methods
+require 'ladle/test_data'
 
+class UserMailerPreview < ActionMailer::Preview
   UserLike = Struct.new(:email, :github_username)
   PullRequestLike = Struct.new(:html_url, :title, :body)
 
@@ -13,7 +13,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         "We made these changes because things needed to be changed and we noticed and we had the means to make the changes, so we did."
                       ),
-                      steward_changes_views: create_steward_changes_views)
+                      changes_view: Ladle::TestData.create_changes_view)
   end
 
   def notify_without_description
@@ -24,24 +24,7 @@ class UserMailerPreview < ActionMailer::Preview
                         'Initial commit',
                         nil
                       ),
-                      steward_changes_views: create_steward_changes_views)
+                      changes_view: Ladle::TestData.create_changes_view)
 
-  end
-
-  private
-
-  def create_steward_changes_views
-    [
-      Ladle::StewardChangesView.new(stewards_file: 'app/stewards.yml',
-                                    changes:       [
-                                                     build(:file_change, status: :removed, file: "app/removed_file.rb", deletions: 6),
-                                                     build(:file_change, status: :modified, file: "app/modified_file.rb", deletions: 3, additions: 3),
-                                                     build(:file_change, status: :added, file: "app/new_file.rb", additions: 6),
-                                                   ]),
-      Ladle::StewardChangesView.new(stewards_file: 'lib/closet/stewards.yml',
-                                    changes:       [
-                                                     build(:file_change, status: :added, file: "lib/closet/top_shelf/new_file.rb", additions: 6),
-                                                   ]),
-    ]
   end
 end

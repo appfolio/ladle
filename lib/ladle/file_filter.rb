@@ -32,5 +32,4 @@ module Ladle
 
     attr_reader :include_patterns, :exclude_patterns
   end
-
 end

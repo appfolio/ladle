@@ -10,10 +10,10 @@ You can view, comment on, or merge this pull request online at:
 
 You were notified of this pull request because of the following changes:
 
-<% @steward_changes_views.each do |steward_changes| %>
-  Changes monitored by <%= steward_changes.stewards_file %>:
+<% @changes_view.each do |rules, changes| %>
+  Changes monitored by <%= rules.ref %>/<%= rules.stewards_file %>:
 
-  <% steward_changes.changes.each do |change| %>
+  <% changes.each do |change| %>
     * <%= change.status_initial %> <%= change.file %> (<%= change.changes_count %>)
   <% end %>
 

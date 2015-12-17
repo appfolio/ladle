@@ -44,7 +44,7 @@ module Ladle
       @directories[directory_name] ||= Directory.new(directory_name)
       @directories[directory_name].add_change(file_change)
 
-      if file_change.file.to_s =~ /stewards\.yml$/ && file_change.status != :added
+      if file_change.file.to_s =~ /stewards\.yml$/ && file_change.status != :removed
         @modified_stewards_files << file_change.file
       end
 

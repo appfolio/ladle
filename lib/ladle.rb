@@ -2,7 +2,8 @@ module Ladle
   extend ActiveSupport::Autoload
 
   autoload :FileChange
-  autoload :StewardChangesView
+  autoload :ChangesView
+  autoload :StewardRules
 end
 
 require 'ladle/exceptions'

@@ -1,12 +1,14 @@
 require 'test_helper'
 require 'ladle/steward_notifier'
 
+require 'ladle/test_data'
+
 class StewardNotifierTest < ActionController::TestCase
   setup do
     @steward_changes_views = {
-      'xanderstrike' => create_steward_changes_views,
-      'counterstrike'=> create_steward_changes_views,
-      'boop'         => create_steward_changes_views
+      'xanderstrike' => Ladle::TestData.create_changes_view,
+      'counterstrike'=> Ladle::TestData.create_changes_view,
+      'boop'         => Ladle::TestData.create_changes_view
     }
     @pull_request = create(:pull_request, html_url: 'https://github.com/XanderStrike/test/pull/11')
     @notifier = Ladle::StewardNotifier.new('XanderStrike/test', @pull_request)
@@ -85,22 +87,5 @@ class StewardNotifierTest < ActionController::TestCase
     end
 
     assert_equal nil, notification
-  end
-
-  private
-
-  def create_steward_changes_views
-    [
-      Ladle::StewardChangesView.new(stewards_file: 'app/stewards.yml',
-                                    changes:       [
-                                                     build(:file_change, status: :removed, file: "app/removed_file.rb", deletions: 6),
-                                                     build(:file_change, status: :modified, file: "app/modified_file.rb", deletions: 3, additions: 3),
-                                                     build(:file_change, status: :added, file: "app/new_file.rb", additions: 6),
-                                                   ]),
-      Ladle::StewardChangesView.new(stewards_file: 'lib/closet/stewards.yml',
-                                    changes:       [
-                                                     build(:file_change, status: :added, file: "lib/closet/top_shelf/new_file.rb", additions: 6),
-                                                   ]),
-    ]
   end
 end

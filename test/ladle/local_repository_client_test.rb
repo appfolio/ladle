@@ -7,11 +7,11 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
 
   setup do
     @repository = create(:repository)
-    @client     = Ladle::LocalRepositoryClient.new(Rails.root.to_s, base_ref: 'parent_head', head_ref: 'branch_head')
+    @client     = Ladle::LocalRepositoryClient.new(Rails.root.to_s, base_ref: 'base_head', head_ref: 'branch_head')
   end
 
   test 'pull_request' do
-    assert_equal Ladle::PullRequestInfo.new('branch_head', 'parent_head'), @client.pull_request(12)
+    assert_equal Ladle::PullRequestInfo.new('branch_head', 'base_head'), @client.pull_request(12)
   end
 
   test "pull_request_files" do
@@ -20,7 +20,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
       mock(status: :modified, new_file: {path: "sub/marine.rb"}),
     ]
     commit = mock
-    commit.expects(:diff).with('parent_head').returns(mock(deltas: deltas))
+    commit.expects(:diff).with('base_head').returns(mock(deltas: deltas))
 
     rugged_client = Rugged::Repository.any_instance
     rugged_client.expects(:lookup).with('branch_head').returns(commit)
@@ -90,7 +90,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     rugged_client = Rugged::Repository.any_instance
     rugged_client.expects(:lookup).with("branch_head").when(handler_state.is('finding_files')).returns(commit)
 
-    commit.expects(:diff).with('parent_head').returns(mock(deltas: deltas)).when(handler_state.is('finding_files')).then(handler_state.is('finding_content'))
+    commit.expects(:diff).with('base_head').returns(mock(deltas: deltas)).when(handler_state.is('finding_files')).then(handler_state.is('finding_content'))
 
     content = <<-YAML
       stewards:
@@ -102,8 +102,8 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     tree.expects(:walk_blobs).twice.multiple_yields(["",{name: "some_file.bleh"}], ["sub", {name: "stewards.yml", oid: "object_id"}])
 
     content_sequence = sequence('content')
-    rugged_client.expects(:lookup).with("branch_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
-    rugged_client.expects(:lookup).with("branch_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
+    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
+    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
     rugged_client.expects(:lookup).with('object_id').returns(mock(content: content))
 
     notifier = mock

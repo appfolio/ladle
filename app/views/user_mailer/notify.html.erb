@@ -9,11 +9,11 @@
 <p>You were notified of this pull request because of the following changes:</p>
 
 <ul>
-<% @steward_changes_views.each do |steward_changes| %>
+  <% @changes_view.each do |rules, changes| %>
   <li>
-    <p>Changes monitored by <%= steward_changes.stewards_file %>:</p>
+    <p>Changes monitored by <%= rules.ref %>/<%= rules.stewards_file %>:</p>
     <ul>
-      <% steward_changes.changes.each do |change| %>
+      <% changes.each do |change| %>
         <li><strong><%= change.status_initial %></strong> <%= change.file %> (<%= change.changes_count %>)</li>
       <% end %>
     </ul>
