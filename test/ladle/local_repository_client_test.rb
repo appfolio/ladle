@@ -20,10 +20,10 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
       mock(status: :modified, new_file: {path: "sub/marine.rb"}),
     ]
     commit = mock
-    commit.expects(:diff).with('base_head').returns(mock(deltas: deltas))
+    commit.expects(:diff).with('branch_head').returns(mock(deltas: deltas))
 
     rugged_client = Rugged::Repository.any_instance
-    rugged_client.expects(:lookup).with('branch_head').returns(commit)
+    rugged_client.expects(:lookup).with('base_head').returns(commit)
 
     expected = Ladle::ChangedFiles.new
     expected.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
@@ -88,9 +88,9 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     commit = mock
 
     rugged_client = Rugged::Repository.any_instance
-    rugged_client.expects(:lookup).with("branch_head").when(handler_state.is('finding_files')).returns(commit)
+    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_files')).returns(commit)
 
-    commit.expects(:diff).with('base_head').returns(mock(deltas: deltas)).when(handler_state.is('finding_files')).then(handler_state.is('finding_content'))
+    commit.expects(:diff).with('branch_head').returns(mock(deltas: deltas)).when(handler_state.is('finding_files')).then(handler_state.is('finding_content'))
 
     content = <<-YAML
       stewards:
