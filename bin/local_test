@@ -15,7 +15,7 @@ class LocalRepoTest < ActiveSupport::TestCase
 
     client = Ladle::LocalRepositoryClient.new('/Users/dtognazzini/src/appfolio/ladle-stage',
                                               base_ref: 'dbe4952c800c9d50fb61e68d883765d907995200',
-                                              head_ref: '4a52ed41d75eefee84d48854d8932cb1053df35e')
+                                              head_ref: '6d6ebd991450ea1a95ca431ec5cd60764d99ef24')
 
     notifier = Ladle::StewardNotifier.new("ladle-stage", pull_request)
 

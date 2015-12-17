@@ -21,8 +21,8 @@ module Ladle
       @files ||= begin
         changed_files = Ladle::ChangedFiles.new
 
-        commit = @repo.lookup(@head_ref)
-        diff   = commit.diff(@base_ref)
+        commit = @repo.lookup(@base_ref)
+        diff   = commit.diff(@head_ref)
         diff.deltas.each do |delta|
           file_change = Ladle::FileChange.new(
             status:    map_status(delta.status),
