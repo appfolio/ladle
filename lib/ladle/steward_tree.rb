@@ -19,7 +19,7 @@ module Ladle
         file_changes = rules.select_matching_file_changes(file_changes)
 
         unless file_changes.empty?
-          changes_view.add_changes(rules, file_changes)
+          changes_view = changes_view.add_changes(rules, file_changes)
         end
       end
 
