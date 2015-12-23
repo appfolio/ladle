@@ -15,9 +15,13 @@ module Ladle
       end
     end
 
-    def initialize
+    def initialize(*file_changes)
       @modified_stewards_files = []
       @directories = {}
+
+      file_changes.each do |file_change|
+        add_file_change_internal(file_change)
+      end
     end
 
     def file_changes_in(directory_path)
@@ -39,27 +43,9 @@ module Ladle
     end
 
     def add_file_change(file_change)
-      directory_name = file_change.file.dirname
-
-      new_directories = {}.merge(@directories)
-
-      new_directories[directory_name] ||= Directory.new(directory_name)
-      new_directories[directory_name] = new_directories[directory_name].add_change(file_change)
-
-      modified_stewards_files = [].concat(@modified_stewards_files)
-
-      if file_change.file.to_s =~ /stewards\.yml$/ && file_change.status != :removed
-        modified_stewards_files << file_change.file
-      end
-
-      # add all other directories for this file
-      file_change.file.ascend do |file|
-        new_directories[file.dirname] = new_directories[file.dirname] || Directory.new(file.dirname)
-      end
-
-      changed_files = ChangedFiles.allocate
-      changed_files.initialize_with_new_file_change(new_directories, modified_stewards_files)
-      changed_files
+      new_instance = self.dup
+      new_instance.add_file_change_internal(file_change)
+      new_instance
     end
 
     def ==(other)
@@ -70,12 +56,32 @@ module Ladle
 
     protected
 
-    def initialize_with_new_file_change(directories, modified_stewards_files)
-      @directories = directories
-      @modified_stewards_files = modified_stewards_files
+    def directories_attribute
+      @directories
+    end
+
+    def add_file_change_internal(file_change)
+      directory_name = file_change.file.dirname
+
+      @directories[directory_name] ||= Directory.new(directory_name)
+      @directories[directory_name] = @directories[directory_name].add_change(file_change)
+
+      if file_change.file.to_s =~ /stewards\.yml$/ && file_change.status != :removed
+        @modified_stewards_files << file_change.file
+      end
+
+      # add all other directories for this file
+      file_change.file.ascend do |file|
+        @directories[file.dirname] ||= Directory.new(file.dirname)
+      end
     end
 
     private
+
+    def initialize_copy(other)
+      @modified_stewards_files = other.modified_stewards_files.dup
+      @directories = other.directories_attribute.dup
+    end
 
     def normalize_directory_path(path)
       path = "/#{path}/"

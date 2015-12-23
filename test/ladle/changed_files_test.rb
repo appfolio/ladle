@@ -59,13 +59,13 @@ class ChangedFilesTest < ActiveSupport::TestCase
   end
 
   test 'directories' do
-    changed_files = Ladle::ChangedFiles.new
-
-    changed_files = changed_files.add_file_change(build(:file_change, file: "bob/loblaw/law.blog"))
-    changed_files = changed_files.add_file_change(build(:file_change, file: "bob/loblaw/law2.blog"))
-    changed_files = changed_files.add_file_change(build(:file_change, file: "bob_rob/inlaw/law.blog"))
-    changed_files = changed_files.add_file_change(build(:file_change, file: "loblaw/law.blog"))
-    changed_files = changed_files.add_file_change(build(:file_change, file: "law.blog"))
+    changed_files = Ladle::ChangedFiles.new(
+      build(:file_change, file: "bob/loblaw/law.blog"),
+      build(:file_change, file: "bob/loblaw/law2.blog"),
+      build(:file_change, file: "bob_rob/inlaw/law.blog"),
+      build(:file_change, file: "loblaw/law.blog"),
+      build(:file_change, file: "law.blog")
+    )
 
     expected = [
       Pathname.new('loblaw'),

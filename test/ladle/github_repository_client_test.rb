@@ -31,9 +31,10 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
                                                                                      {status: "modified", filename: 'sub/marine.rb'},
                                                                                    ])
 
-    expected = Ladle::ChangedFiles.new
-    expected = expected.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
-    expected = expected.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
+    expected = Ladle::ChangedFiles.new(
+      build(:file_change, status: :added, file: 'one.rb'),
+      build(:file_change, status: :modified, file: 'sub/marine.rb')
+    )
 
     assert_equal expected, @client.pull_request_files(12)
   end
