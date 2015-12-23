@@ -4,8 +4,12 @@ module Ladle
 
     RulesChanges = Struct.new(:rules, :changes)
 
-    def initialize
+    def initialize(*rules_and_changes)
       @paths = {}
+
+      rules_and_changes.each do |rules:, changes:|
+        add_changes_to(rules, changes)
+      end
     end
 
     def empty?
@@ -30,18 +34,20 @@ module Ladle
     end
 
     def add_changes(rules, changes)
-      @paths[rules.stewards_file.to_s] ||= []
-
-      add_changes_to(@paths[rules.stewards_file.to_s], rules, changes)
+      new_instance = self.dup
+      new_instance.add_changes_to(rules, changes)
+      new_instance
     end
 
     protected
 
     attr_reader :paths
 
-    private
+    def add_changes_to(rules, changes)
+      @paths[rules.stewards_file.to_s] ||= []
 
-    def add_changes_to(rules_and_changes_collection, rules, changes)
+      rules_and_changes_collection = @paths[rules.stewards_file.to_s]
+
       changes_already_exist = rules_and_changes_collection.any? do |rules_changes|
         rules_changes.changes == changes
       end
@@ -49,6 +55,12 @@ module Ladle
       unless changes_already_exist
         rules_and_changes_collection << RulesChanges.new(rules, changes)
       end
+    end
+
+    private
+
+    def initialize_copy(other)
+      @paths = other.paths.dup
     end
   end
 end

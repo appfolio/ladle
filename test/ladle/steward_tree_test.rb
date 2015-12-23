@@ -6,25 +6,25 @@ require 'ladle/changed_files'
 
 class StewardTreeTest < ActiveSupport::TestCase
   test 'changes selected from rules' do
-    changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, file: 'stewards.yml'))
-    changed_files.add_file_change(build(:file_change, file: 'one.rb'))
-    changed_files.add_file_change(build(:file_change, file: 'sub/marine.rb'))
-    changed_files.add_file_change(build(:file_change, file: 'sub/stewards.yml'))
-    changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
-    changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
-
-    tree = Ladle::StewardTree.new
+    changed_files = Ladle::ChangedFiles.new(
+      build(:file_change, file: 'stewards.yml'),
+      build(:file_change, file: 'one.rb'),
+      build(:file_change, file: 'sub/marine.rb'),
+      build(:file_change, file: 'sub/stewards.yml'),
+      build(:file_change, file: 'sub2/sandwich'),
+      build(:file_change, file: 'sub3/stewards.yml')
+    )
 
     sub_rules = Ladle::StewardRules.new(ref:           'base',
                                         stewards_file: 'sub/stewards.yml')
 
-    tree.add_rules(sub_rules)
-
     sub4_rules = Ladle::StewardRules.new(ref:           'base',
-                                        stewards_file: 'sub4/stewards.yml')
+                                         stewards_file: 'sub4/stewards.yml')
 
-    tree.add_rules(sub4_rules)
+    tree = Ladle::StewardTree.new([
+                                    sub_rules,
+                                    sub4_rules
+                                  ])
 
     expected_rules_and_changes = [
       [

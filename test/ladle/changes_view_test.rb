@@ -8,32 +8,25 @@ class ChangesViewTest < ActiveSupport::TestCase
   setup :create_file_changes
 
   test 'comparable' do
-    changes_view1 = build(:changes_view,
-                          changes: [
-                                     {
-                                       rules:   Ladle::StewardRules.new(ref:           'base',
-                                                                        stewards_file: 'app/stewards.yml'),
-                                       changes: [
-                                                  build(:file_change, status: :modified, file: "app/modified_file.rb"),
-                                                  build(:file_change, status: :added, file: "app/new_file.rb"),
-                                                  build(:file_change, status: :removed, file: "app/removed_file.rb"),
-                                                ]
-                                     }
-                                   ])
+    changes_view1 = Ladle::ChangesView.new(
+      rules:   Ladle::StewardRules.new(ref:           'base',
+                                       stewards_file: 'app/stewards.yml'),
+      changes: [
+                 build(:file_change, status: :modified, file: "app/modified_file.rb"),
+                 build(:file_change, status: :added, file: "app/new_file.rb"),
+                 build(:file_change, status: :removed, file: "app/removed_file.rb"),
+               ]
+    )
 
-
-    changes_view2 = build(:changes_view,
-                          changes: [
-                                     {
-                                       rules:   Ladle::StewardRules.new(ref:           'base',
-                                                                        stewards_file: 'app/stewards.yml'),
-                                       changes: [
-                                                  build(:file_change, status: :modified, file: "app/modified_file.rb"),
-                                                  build(:file_change, status: :added, file: "app/new_file.rb"),
-                                                  build(:file_change, status: :removed, file: "app/removed_file.rb"),
-                                                ]
-                                     }
-                                   ])
+    changes_view2 = Ladle::ChangesView.new(
+      rules:   Ladle::StewardRules.new(ref:           'base',
+                                       stewards_file: 'app/stewards.yml'),
+      changes: [
+                 build(:file_change, status: :modified, file: "app/modified_file.rb"),
+                 build(:file_change, status: :added, file: "app/new_file.rb"),
+                 build(:file_change, status: :removed, file: "app/removed_file.rb"),
+               ]
+    )
 
     assert_equal changes_view1, changes_view2
     assert changes_view1.eql?(changes_view2)
@@ -47,7 +40,7 @@ class ChangesViewTest < ActiveSupport::TestCase
     rules = Ladle::StewardRules.new(ref:           'base',
                                     stewards_file: 'stewards.yml')
 
-    changes_view.add_changes(rules, @file_changes)
+    changes_view = changes_view.add_changes(rules, @file_changes)
     refute_predicate changes_view, :empty?
   end
 
@@ -64,7 +57,7 @@ class ChangesViewTest < ActiveSupport::TestCase
     ]
 
     rules_list.each do |rules|
-      changes_view.add_changes(rules, @file_changes)
+      changes_view = changes_view.add_changes(rules, @file_changes)
     end
 
     expected_order = [
@@ -82,12 +75,12 @@ class ChangesViewTest < ActiveSupport::TestCase
     base_rules = Ladle::StewardRules.new(ref:           'base',
                                          stewards_file: 'stewards.yml')
 
-    changes_view.add_changes(base_rules, @file_changes)
+    changes_view = changes_view.add_changes(base_rules, @file_changes)
 
     bleh_rules = Ladle::StewardRules.new(ref:           'bleh',
                                          stewards_file: 'stewards.yml')
 
-    changes_view.add_changes(bleh_rules, @file_changes)
+    changes_view = changes_view.add_changes(bleh_rules, @file_changes)
     assert_equal [[base_rules, @file_changes]], changes_view.to_a
   end
 
@@ -97,12 +90,12 @@ class ChangesViewTest < ActiveSupport::TestCase
     base_rules = Ladle::StewardRules.new(ref:           'base',
                                          stewards_file: 'stewards.yml')
 
-    changes_view.add_changes(base_rules, @file_changes)
+    changes_view = changes_view.add_changes(base_rules, @file_changes)
 
     bleh_rules = Ladle::StewardRules.new(ref:           'bleh',
                                          stewards_file: 'sub/stewards.yml')
 
-    changes_view.add_changes(bleh_rules, @file_changes)
+    changes_view = changes_view.add_changes(bleh_rules, @file_changes)
     assert_equal [[base_rules, @file_changes], [bleh_rules, @file_changes]], changes_view.to_a
   end
 
