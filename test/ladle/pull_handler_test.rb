@@ -20,8 +20,8 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'does nothing when there are not stewards' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb'))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb'))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -34,8 +34,8 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'notifies stewards' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -111,9 +111,9 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'notifies steward from same file across branches' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -164,9 +164,9 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'notifies steward from same file across branches - remove duplicates' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'file1.txt', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'file2.txt', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'stewards.yml', additions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -208,13 +208,13 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'notifies old stewards' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1))
+    changed_files = changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -338,9 +338,9 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'notify - stewards file not in changes_view' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'goodbye/kitty/sianara.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1))
+    changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'goodbye/kitty/sianara.txt', additions: 1))
+    changed_files = changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -396,8 +396,8 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'handle handles invalid stewards files ' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
+    changed_files = changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'one.rb', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -439,8 +439,8 @@ class PullHandlerTest < ActiveSupport::TestCase
 
   test 'handle omits notifying of views/stewards without changes' do
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1))
-    changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1))
+    changed_files = changed_files.add_file_change(build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
@@ -494,12 +494,12 @@ class PullHandlerTest < ActiveSupport::TestCase
     stewards_trees['xanderstrike'] = tree
 
     changed_files = Ladle::ChangedFiles.new
-    changed_files.add_file_change(build(:file_change, file: 'stewards.yml'))
-    changed_files.add_file_change(build(:file_change, file: 'one.rb'))
-    changed_files.add_file_change(build(:file_change, file: 'sub/marine.rb'))
-    changed_files.add_file_change(build(:file_change, file: 'sub/stewards.yml'))
-    changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
-    changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'stewards.yml'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'one.rb'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'sub/marine.rb'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'sub/stewards.yml'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'sub2/sandwich'))
+    changed_files = changed_files.add_file_change(build(:file_change, file: 'sub3/stewards.yml'))
 
     handler = Ladle::PullHandler.new(mock('client'), mock('notifier'))
     resolved_stewards_registry = handler.send(:collect_changes, stewards_trees, changed_files)

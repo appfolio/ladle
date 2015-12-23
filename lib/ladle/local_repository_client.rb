@@ -31,7 +31,7 @@ module Ladle
             deletions: 0
           )
 
-          changed_files.add_file_change(file_change)
+          changed_files = changed_files.add_file_change(file_change)
         end
 
         changed_files
