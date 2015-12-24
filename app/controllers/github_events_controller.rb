@@ -6,8 +6,6 @@ class GithubEventsController < ApplicationController
   before_filter :find_repository, only: [:payload]
   before_filter :verify_signature, only: [:payload]
 
-  PullRequestData = Struct.new(:number, :html_url, :title, :body)
-
   def payload
     number              = params.require(:number)
     pull_request_params = params.require(:pull_request)
@@ -16,12 +14,11 @@ class GithubEventsController < ApplicationController
     Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
 
     if pull_request_state == 'open'
-      pull_request_data = PullRequestData.new(number,
-                                              pull_request_params[:html_url],
-                                              pull_request_params[:title],
-                                              pull_request_params[:body])
+      pull_request = find_pull_request(number:   number,
+                                       html_url: pull_request_params[:html_url],
+                                       title:    pull_request_params[:title],
+                                       body:     pull_request_params[:body])
 
-      pull_request = find_pull_request(pull_request_data)
       Ladle::NotifyStewardsOfPullRequestChanges.(pull_request)
     else
       Rails.logger.info 'Pull closed, doing nothing.'
@@ -32,12 +29,12 @@ class GithubEventsController < ApplicationController
 
   private
 
-  def find_pull_request(data)
+  def find_pull_request(number:, html_url:, title:, body:)
     ActiveRecord::Base.transaction do
-      pull_request = PullRequest.find_or_create_by!(repository: @repository, number: data[:number], html_url: data[:html_url])
+      pull_request = PullRequest.find_or_create_by!(repository: @repository, number: number, html_url: html_url)
       pull_request.update_attributes!(
-        title: data[:title],
-        body:  data[:body]
+        title: title,
+        body:  body
       )
       pull_request
     end
