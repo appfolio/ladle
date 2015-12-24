@@ -95,7 +95,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test "collects changes for steward from same file across branches" do
+  test "collects changes from same file across branches" do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'file1.txt', additions: 1),
       build(:file_change, status: :added, file: 'file2.txt', additions: 1),
@@ -210,9 +210,8 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'collect_changes handles invalid stewards files ' do
+  test 'ignores invalid stewards files' do
     changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, status: :added, file: 'one.rb', additions: 1),
       build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1)
     )
 
@@ -225,23 +224,18 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
 
       tree.file('stewards.yml', <<-YAML)
         stewards:
-          - xanderstrike
-          - fadsfadsfadsfadsf
+          - somegal
       YAML
     end
 
-    expected_stewards_changes_view = Ladle::ChangesView.new(
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'stewards.yml'),
-      changes: [
-                 build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-               ]
-    )
-
     expected = {
-      'xanderstrike'      => expected_stewards_changes_view,
-      'fadsfadsfadsfadsf' => expected_stewards_changes_view,
+      'somegal' => Ladle::ChangesView.new(
+        rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                         stewards_file: 'stewards.yml'),
+        changes: [
+                   build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                 ]
+      )
     }
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
@@ -251,13 +245,12 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
 
   test 'omits stewards without changes' do
     changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
-      build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
+      build(:file_change, status: :added, file: 'sub/file.txt', additions: 1)
     )
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    client.add_stewards_file(path: 'hello/stewards.yml', ref: 'base_head', contents: <<-YAML)
+    client.add_stewards_file(path: 'sub/stewards.yml', ref: 'base_head', contents: <<-YAML)
       stewards:
         - xanderstrike
         - github_username: bob
@@ -267,10 +260,9 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     expected = {
       'xanderstrike' => Ladle::ChangesView.new(
         rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                         stewards_file: 'hello/stewards.yml'),
+                                         stewards_file: 'sub/stewards.yml'),
         changes: [
-                   build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
-                   build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
+                   build(:file_change, status: :added, file: 'sub/file.txt', additions: 1)
                  ]
       )
     }
@@ -278,33 +270,25 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test "append_changes" do
-    tree = Ladle::StewardTree.new([
-      Ladle::StewardRules.new(ref:           'base',
-                              stewards_file: 'stewards.yml',
-                              file_filter:   Ladle::FileFilter.new),
+  test "append_changes omits rules without changes and file-changes without rules" do
+    stewards_trees = {
+      'someguy' => Ladle::StewardTree.new([
+                                            Ladle::StewardRules.new(ref:           'base',
+                                                                    stewards_file: 'sub/stewards.yml',
+                                                                    file_filter:   Ladle::FileFilter.new),
 
-      Ladle::StewardRules.new(ref:           'base',
-                              stewards_file: 'sub/stewards.yml',
-                              file_filter:   Ladle::FileFilter.new),
+                                            Ladle::StewardRules.new(ref:           'base',
+                                                                    stewards_file: 'sub3/stewards.yml',
+                                                                    file_filter:   Ladle::FileFilter.new),
 
-      Ladle::StewardRules.new(ref:           'base',
-                              stewards_file: 'sub3/stewards.yml',
-                              file_filter:   Ladle::FileFilter.new),
-
-      Ladle::StewardRules.new(ref:           'base',
-                              stewards_file: 'sub4/stewards.yml',
-                              file_filter:   Ladle::FileFilter.new)
-    ])
-
-    stewards_trees = {}
-    stewards_trees['xanderstrike'] = tree
+                                            Ladle::StewardRules.new(ref:           'base',
+                                                                    stewards_file: 'sub4/stewards.yml',
+                                                                    file_filter:   Ladle::FileFilter.new)
+                                          ])
+    }
 
     changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, file: 'stewards.yml'),
-      build(:file_change, file: 'one.rb'),
       build(:file_change, file: 'sub/marine.rb'),
-      build(:file_change, file: 'sub/stewards.yml'),
       build(:file_change, file: 'sub2/sandwich'),
       build(:file_change, file: 'sub3/stewards.yml')
     )
@@ -315,22 +299,9 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     expected_changes_view = Ladle::ChangesView.new(
       {
         rules:   Ladle::StewardRules.new(ref:           'base',
-                                         stewards_file: 'stewards.yml'),
-        changes: [
-                   build(:file_change, file: 'stewards.yml'),
-                   build(:file_change, file: 'one.rb'),
-                   build(:file_change, file: 'sub/marine.rb'),
-                   build(:file_change, file: 'sub/stewards.yml'),
-                   build(:file_change, file: 'sub2/sandwich'),
-                   build(:file_change, file: 'sub3/stewards.yml')
-                 ]
-      },
-      {
-        rules:   Ladle::StewardRules.new(ref:           'base',
                                          stewards_file: 'sub/stewards.yml'),
         changes: [
                    build(:file_change, file: 'sub/marine.rb'),
-                   build(:file_change, file: 'sub/stewards.yml'),
                  ]
       },
       {
@@ -342,6 +313,6 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
       }
     )
 
-    assert_equal expected_changes_view, resolved_stewards_registry['xanderstrike']
+    assert_equal expected_changes_view, resolved_stewards_registry['someguy']
   end
 end
