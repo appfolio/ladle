@@ -1,6 +1,4 @@
-require 'ladle/pull_handler'
-require 'ladle/steward_notifier'
-require 'ladle/github_repository_client'
+require 'ladle/notify_stewards_of_pull_request_changes'
 
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
@@ -8,30 +6,23 @@ class GithubEventsController < ApplicationController
   before_filter :find_repository, only: [:payload]
   before_filter :verify_signature, only: [:payload]
 
+  PullRequestData = Struct.new(:number, :html_url, :title, :body)
+
   def payload
-    pull_request = params.require(:pull_request)
+    number              = params.require(:number)
+    pull_request_params = params.require(:pull_request)
+    pull_request_state  = pull_request_params.require(:state)
 
-    if pull_request[:state] == 'open'
-      number = params.require(:number)
-      Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
+    Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
 
-      pull_request = find_pull_request({
-                                         number:   number,
-                                         html_url: pull_request[:html_url],
-                                         title:    pull_request[:title],
-                                         body:     pull_request[:body],
-                                       })
+    if pull_request_state == 'open'
+      pull_request_data = PullRequestData.new(number,
+                                              pull_request_params[:html_url],
+                                              pull_request_params[:title],
+                                              pull_request_params[:body])
 
-      github_client = Ladle::GithubRepositoryClient.new(@repository)
-      stewards_registry = Ladle::PullHandler.new(github_client).handle(pull_request)
-
-      if stewards_registry.empty?
-        Rails.logger.info('No stewards found. Doing nothing.')
-      else
-        Rails.logger.info("Found #{stewards_registry.size} stewards. Notifying.")
-        notifier = Ladle::StewardNotifier.new(@repository.name, pull_request)
-        notifier.notify(stewards_registry)
-      end
+      pull_request = find_pull_request(pull_request_data)
+      Ladle::NotifyStewardsOfPullRequestChanges.(pull_request)
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end
