@@ -79,8 +79,6 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
     octokit_client = Octokit::Client.any_instance
     octokit_client.expects(:pull_request).with(@repository.name, 12).returns(expected_result)
 
-    handler_state = states('handler_state').starts_as('finding_files')
-
     expected_result = [
       {status: "added", filename: 'one.rb'},
       {status: "modified", filename: 'sub/marine.rb'},

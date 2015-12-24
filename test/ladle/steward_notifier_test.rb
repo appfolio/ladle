@@ -10,7 +10,7 @@ class StewardNotifierTest < ActionController::TestCase
     @notifier = Ladle::StewardNotifier.new('XanderStrike/test', @pull_request)
   end
 
-  test 'assigns the handler' do
+  test 'assigns the pull request' do
     assert_equal @pull_request, @notifier.instance_variable_get(:@pull_request)
   end
 

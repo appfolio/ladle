@@ -18,7 +18,7 @@ class NotifyStewardsOfPullRequestChangesTest < ActiveSupport::TestCase
     Ladle::NotifyStewardsOfPullRequestChanges.call(@pull_request)
   end
 
-  test 'open pull request is handled and stewards are notified' do
+  test 'stewards are notified when there are changes' do
     stewards_map = Ladle::TestData.create_stewards_map
 
     Ladle::PullRequestChangeCollector.any_instance.expects(:collect_changes).with(@pull_request).returns(stewards_map)
@@ -29,7 +29,7 @@ class NotifyStewardsOfPullRequestChangesTest < ActiveSupport::TestCase
     Ladle::NotifyStewardsOfPullRequestChanges.call(@pull_request)
   end
 
-  test "open pull request is handled but doesn't notify if there are no stewards" do
+  test "stewards are not notified when there are not changes" do
     Ladle::PullRequestChangeCollector.any_instance.expects(:collect_changes).returns({})
     Ladle::StewardNotifier.any_instance.expects(:notify).never
 

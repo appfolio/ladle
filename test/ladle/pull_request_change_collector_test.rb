@@ -30,7 +30,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_equal({}, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request))
   end
 
-  test 'notifies stewards' do
+  test "collects stewards across stewards files" do
     changed_files = Ladle::ChangedFiles.new(build(:file_change, status: :added, file: 'one.rb', additions: 1),
                                             build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1))
 
@@ -95,7 +95,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'notifies steward from same file across branches' do
+  test "collects changes for steward from same file across branches" do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'file1.txt', additions: 1),
       build(:file_change, status: :added, file: 'file2.txt', additions: 1),
@@ -146,7 +146,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'notifies old stewards' do
+  test 'collects old stewards' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
       build(:file_change, status: :added, file: 'one.rb', additions: 1),
@@ -270,7 +270,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'notify - stewards file not in changes_view' do
+  test 'collects - stewards file not in changes_view' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'goodbye/kitty/sianara.txt', additions: 1),
       build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
@@ -325,7 +325,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'handle handles invalid stewards files ' do
+  test 'collect_changes handles invalid stewards files ' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'one.rb', additions: 1),
       build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1)
@@ -364,7 +364,7 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'handle omits notifying of views/stewards without changes' do
+  test 'omits stewards without changes' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
       build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
@@ -424,8 +424,8 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
       build(:file_change, file: 'sub3/stewards.yml')
     )
 
-    handler = Ladle::PullRequestChangeCollector.new(mock('client'))
-    resolved_stewards_registry = handler.send(:append_changes, stewards_trees, changed_files)
+    collector = Ladle::PullRequestChangeCollector.new(mock('client'))
+    resolved_stewards_registry = collector.send(:append_changes, stewards_trees, changed_files)
 
     expected_changes_view = Ladle::ChangesView.new(
       {
