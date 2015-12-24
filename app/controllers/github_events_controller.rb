@@ -22,9 +22,16 @@ class GithubEventsController < ApplicationController
                                          body:     pull_request[:body],
                                        })
 
-      notifier = Ladle::StewardNotifier.new(@repository.name, pull_request)
       github_client = Ladle::GithubRepositoryClient.new(@repository)
-      Ladle::PullHandler.new(github_client, notifier).handle(pull_request)
+      stewards_registry = Ladle::PullHandler.new(github_client).handle(pull_request)
+
+      if stewards_registry.empty?
+        Rails.logger.info('No stewards found. Doing nothing.')
+      else
+        Rails.logger.info("Found #{stewards_registry.size} stewards. Notifying.")
+        notifier = Ladle::StewardNotifier.new(@repository.name, pull_request)
+        notifier.notify(stewards_registry)
+      end
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end

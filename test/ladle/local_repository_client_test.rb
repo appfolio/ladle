@@ -107,10 +107,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
     rugged_client.expects(:lookup).with('object_id').returns(mock(content: content))
 
-    notifier = mock
-    notifier.expects(:notify)
-
-    handler = Ladle::PullHandler.new(@client, notifier)
+    handler = Ladle::PullHandler.new(@client)
 
     pull_request = create(:pull_request, repository: @repository)
     handler.handle(pull_request)

@@ -100,10 +100,7 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
       .with(@repository.name, path: 'stewards.yml', ref: 'base_head')
       .raises(Octokit::NotFound)
 
-    notifier = mock
-    notifier.expects(:notify)
-
-    handler = Ladle::PullHandler.new(@client, notifier)
+    handler = Ladle::PullHandler.new(@client)
 
     pull_request = create(:pull_request, repository: @repository, number: 12)
     handler.handle(pull_request)

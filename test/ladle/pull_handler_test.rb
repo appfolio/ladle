@@ -9,27 +9,25 @@ require 'ladle/steward_rules'
 
 require 'ladle/stubbed_repo_client'
 
-require 'mocha_deep_hash'
+require 'assert_deep_hash'
 
 class PullHandlerTest < ActiveSupport::TestCase
+  include AssertDeepHash
+
   setup do
     user = create(:user)
     @repository = Repository.create!(name: 'xanderstrike/test', webhook_secret: 'whatever', access_via: user)
     @pull_request = create(:pull_request, repository: @repository, number: 30, html_url: 'www.test.com')
   end
 
-  test 'does nothing when there are not stewards' do
+  test 'returns an empty hash when there are no stewards' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'one.rb'),
       build(:file_change, status: :modified, file: 'sub/marine.rb'))
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    logger_mock = mock
-    logger_mock.expects(:info).with('No stewards found. Doing nothing.')
-    Rails.stubs(:logger).returns(logger_mock)
-
-    Ladle::PullHandler.new(client, mock('notifier')).handle(@pull_request)
+    assert_equal({}, Ladle::PullHandler.new(client).handle(@pull_request))
   end
 
   test 'notifies stewards' do
@@ -55,50 +53,46 @@ class PullHandlerTest < ActiveSupport::TestCase
       YAML
     end
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash(
-              {
-                'xanderstrike'      => Ladle::ChangesView.new(
-                  {
-                    rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                     stewards_file: 'stewards.yml'),
-                    changes: [
-                               build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                               build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                             ]
-                  },
-                  {
-                    rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                     stewards_file: 'sub/stewards.yml'),
-                    changes: [
-                               build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                             ]
-                  }
-                ),
-                'fadsfadsfadsfadsf' => Ladle::ChangesView.new(
-                  rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                   stewards_file: 'sub/stewards.yml'),
-                  changes: [
-                             build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                           ]
-                ),
-                'bob'               => Ladle::ChangesView.new(
-                  rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                   stewards_file: 'stewards.yml',
-                                                   file_filter:   Ladle::FileFilter.new(
-                                                     include_patterns: ["**.rb"],
-                                                     exclude_patterns: ["**.txt"]
-                                                   )),
-                  changes: [
-                             build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                             build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
-                           ]
-                )
+    expected = {
+      'xanderstrike'      => Ladle::ChangesView.new(
+        {
+          rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                           stewards_file: 'stewards.yml'),
+          changes: [
+                     build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                     build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                   ]
+        },
+        {
+          rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                           stewards_file: 'sub/stewards.yml'),
+          changes: [
+                     build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                   ]
+        }
+      ),
+      'fadsfadsfadsfadsf' => Ladle::ChangesView.new(
+        rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                         stewards_file: 'sub/stewards.yml'),
+        changes: [
+                   build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                 ]
+      ),
+      'bob'               => Ladle::ChangesView.new(
+        rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                         stewards_file: 'stewards.yml',
+                                         file_filter:   Ladle::FileFilter.new(
+                                           include_patterns: ["**.rb"],
+                                           exclude_patterns: ["**.txt"]
+                                         )),
+        changes: [
+                   build(:file_change, status: :added, file: 'one.rb', additions: 1),
+                   build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1, deletions: 1),
+                 ]
+      )
+    }
 
-              }))
-
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'notifies steward from same file across branches' do
@@ -122,36 +116,34 @@ class PullHandlerTest < ActiveSupport::TestCase
           include: file2.txt
     YAML
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash({
-                        'someguy' => Ladle::ChangesView.new(
-                          {
-                            rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                             stewards_file: 'stewards.yml',
-                                                             file_filter:   Ladle::FileFilter.new(
-                                                               include_patterns: ["file1.txt"]
-                                                             ),
-                            ),
-                            changes: [
-                                       build(:file_change, status: :added, file: 'file1.txt', additions: 1)
-                                     ]
-                          },
-                          {
-                            rules:   Ladle::StewardRules.new(ref:           'branch_head',
-                                                             stewards_file: 'stewards.yml',
-                                                             file_filter:   Ladle::FileFilter.new(
-                                                               include_patterns: ["file2.txt"]
-                                                             ),
-                            ),
-                            changes: [
-                                       build(:file_change, status: :added, file: 'file2.txt', additions: 1)
-                                     ]
-                          }
-                        )
-                      }))
+    expected = {
+      'someguy' => Ladle::ChangesView.new(
+        {
+          rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                           stewards_file: 'stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new(
+                                             include_patterns: ["file1.txt"]
+                                           ),
+          ),
+          changes: [
+                     build(:file_change, status: :added, file: 'file1.txt', additions: 1)
+                   ]
+        },
+        {
+          rules:   Ladle::StewardRules.new(ref:           'branch_head',
+                                           stewards_file: 'stewards.yml',
+                                           file_filter:   Ladle::FileFilter.new(
+                                             include_patterns: ["file2.txt"]
+                                           ),
+          ),
+          changes: [
+                     build(:file_change, status: :added, file: 'file2.txt', additions: 1)
+                   ]
+        }
+      )
+    }
 
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'notifies steward from same file across branches - remove duplicates' do
@@ -175,25 +167,21 @@ class PullHandlerTest < ActiveSupport::TestCase
           include: file1.*
     YAML
 
-    changes = Ladle::ChangesView.new(
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'stewards.yml',
-                                       file_filter:   Ladle::FileFilter.new(
-                                         include_patterns: ["file1.txt"]
-                                       ),
-      ),
-      changes: [
-                 build(:file_change, status: :added, file: 'file1.txt', additions: 1)
-               ]
-    )
+    expected = {
+      'someguy' => Ladle::ChangesView.new(
+        rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                         stewards_file: 'stewards.yml',
+                                         file_filter:   Ladle::FileFilter.new(
+                                           include_patterns: ["file1.txt"]
+                                         ),
+        ),
+        changes: [
+                   build(:file_change, status: :added, file: 'file1.txt', additions: 1)
+                 ]
+      )
+    }
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash({
-                        'someguy' => changes
-                      }))
-
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'notifies old stewards' do
@@ -296,30 +284,28 @@ class PullHandlerTest < ActiveSupport::TestCase
                ]
     }
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash({
-                        'xanderstrike'      => Ladle::ChangesView.new(
-                          expected_stewards_changes_view,
-                          expected_branch_sub_stewards_changes_view,
-                          expected_sub3_stewards_changes_view
-                        ),
-                        'fadsfadsfadsfadsf' => Ladle::ChangesView.new(
-                          expected_branch_sub_stewards_changes_view,
-                        ),
-                        'bob'               => Ladle::ChangesView.new(
-                          expected_stewards_changes_view,
-                          expected_sub3_stewards_changes_view
-                        ),
-                        'jeb'               => Ladle::ChangesView.new(
-                          expected_base_sub_stewards_changes_view,
-                        ),
-                        'hamburglar'        => Ladle::ChangesView.new(
-                          expected_sub2_stewards_changes_view
-                        )
-                      }))
+    expected = {
+      'xanderstrike'      => Ladle::ChangesView.new(
+        expected_stewards_changes_view,
+        expected_branch_sub_stewards_changes_view,
+        expected_sub3_stewards_changes_view
+      ),
+      'fadsfadsfadsfadsf' => Ladle::ChangesView.new(
+        expected_branch_sub_stewards_changes_view,
+      ),
+      'bob'               => Ladle::ChangesView.new(
+        expected_stewards_changes_view,
+        expected_sub3_stewards_changes_view
+      ),
+      'jeb'               => Ladle::ChangesView.new(
+        expected_base_sub_stewards_changes_view,
+      ),
+      'hamburglar'        => Ladle::ChangesView.new(
+        expected_sub2_stewards_changes_view
+      )
+    }
 
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'notify - stewards file not in changes_view' do
@@ -364,19 +350,17 @@ class PullHandlerTest < ActiveSupport::TestCase
                ]
     }
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash({
-                        'xanderstrike' => Ladle::ChangesView.new(
-                          expected_stewards_changes_view,
-                          expected_sub_stewards_changes_view
-                        ),
-                        'bleh'         => Ladle::ChangesView.new(
-                          expected_sub_stewards_changes_view
-                        ),
-                      }))
+    expected = {
+      'xanderstrike' => Ladle::ChangesView.new(
+        expected_stewards_changes_view,
+        expected_sub_stewards_changes_view
+      ),
+      'bleh'         => Ladle::ChangesView.new(
+        expected_sub_stewards_changes_view
+      ),
+    }
 
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'handle handles invalid stewards files ' do
@@ -408,16 +392,14 @@ class PullHandlerTest < ActiveSupport::TestCase
                ]
     )
 
-    notifier = mock
-    notifier.expects(:notify)
-      .with(deep_hash({
-              'xanderstrike'      => expected_stewards_changes_view,
-              'fadsfadsfadsfadsf' => expected_stewards_changes_view,
-            }))
+    expected = {
+      'xanderstrike'      => expected_stewards_changes_view,
+      'fadsfadsfadsfadsf' => expected_stewards_changes_view,
+    }
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
 
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test 'handle omits notifying of views/stewards without changes' do
@@ -435,21 +417,18 @@ class PullHandlerTest < ActiveSupport::TestCase
           include: "*.bin"
     YAML
 
-    notifier = mock
-    notifier.stubs(:id).returns(1)
-    notifier.expects(:notify)
-      .with(deep_hash({
-                        'xanderstrike' => Ladle::ChangesView.new(
-                          rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                                           stewards_file: 'hello/stewards.yml'),
-                          changes: [
-                                     build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
-                                     build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
-                                   ]
-                        )
-                      }))
+    expected = {
+      'xanderstrike' => Ladle::ChangesView.new(
+        rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                         stewards_file: 'hello/stewards.yml'),
+        changes: [
+                   build(:file_change, status: :added, file: 'hello/kitty/what/is/your/favorite_food.yml', additions: 1),
+                   build(:file_change, status: :added, file: 'hello/kitty/what/is/your/name.txt', additions: 1)
+                 ]
+      )
+    }
 
-    Ladle::PullHandler.new(client, notifier).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
   end
 
   test "collect_changes" do
@@ -483,7 +462,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       build(:file_change, file: 'sub3/stewards.yml')
     )
 
-    handler = Ladle::PullHandler.new(mock('client'), mock('notifier'))
+    handler = Ladle::PullHandler.new(mock('client'))
     resolved_stewards_registry = handler.send(:collect_changes, stewards_trees, changed_files)
 
     expected_changes_view = Ladle::ChangesView.new(

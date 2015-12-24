@@ -4,9 +4,8 @@ require 'ladle/steward_tree'
 
 module Ladle
   class PullHandler
-    def initialize(client, notifier)
+    def initialize(client)
       @client = client
-      @notifier = notifier
     end
 
     def handle(pull_request)
@@ -16,14 +15,7 @@ module Ladle
 
       stewards_trees = collect_stewards_rules(pr_info, pr_files)
 
-      stewards_registry = collect_changes(stewards_trees, pr_files)
-
-      if stewards_registry.empty?
-        Rails.logger.info('No stewards found. Doing nothing.')
-      else
-        Rails.logger.info("Found #{stewards_registry.size} stewards. Notifying.")
-        @notifier.notify(stewards_registry)
-      end
+      collect_changes(stewards_trees, pr_files)
     end
 
     private
