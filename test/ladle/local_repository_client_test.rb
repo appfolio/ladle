@@ -1,7 +1,7 @@
 require 'test_helper'
 
 require 'ladle/local_repository_client'
-require 'ladle/pull_handler'
+require 'ladle/pull_request_change_collector'
 
 class LocalRepositoryClientTest < ActiveSupport::TestCase
 
@@ -78,7 +78,7 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     assert_equal "No support for status :what", raised.message
   end
 
-  test "works with PullHandler" do
+  test "works with PullRequestChangeCollector" do
     handler_state = states('handler_state').starts_as('finding_files')
 
     deltas = [
@@ -107,9 +107,9 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
     rugged_client.expects(:lookup).with('object_id').returns(mock(content: content))
 
-    handler = Ladle::PullHandler.new(@client)
+    collector = Ladle::PullRequestChangeCollector.new(@client)
 
     pull_request = create(:pull_request, repository: @repository)
-    handler.handle(pull_request)
+    collector.collect_changes(pull_request)
   end
 end

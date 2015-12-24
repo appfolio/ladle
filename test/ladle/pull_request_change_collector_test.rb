@@ -1,6 +1,6 @@
 require 'test_helper'
 
-require 'ladle/pull_handler'
+require 'ladle/pull_request_change_collector'
 require 'ladle/pull_request_info'
 require 'ladle/changed_files'
 require 'ladle/file_filter'
@@ -11,7 +11,7 @@ require 'ladle/stubbed_repo_client'
 
 require 'assert_deep_hash'
 
-class PullHandlerTest < ActiveSupport::TestCase
+class PullRequestChangeCollectorTest < ActiveSupport::TestCase
   include AssertDeepHash
 
   setup do
@@ -27,7 +27,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
-    assert_equal({}, Ladle::PullHandler.new(client).handle(@pull_request))
+    assert_equal({}, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request))
   end
 
   test 'notifies stewards' do
@@ -92,7 +92,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       )
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'notifies steward from same file across branches' do
@@ -143,7 +143,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       )
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'notifies steward from same file across branches - remove duplicates' do
@@ -181,7 +181,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       )
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'notifies old stewards' do
@@ -305,7 +305,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       )
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'notify - stewards file not in changes_view' do
@@ -360,7 +360,7 @@ class PullHandlerTest < ActiveSupport::TestCase
       ),
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'handle handles invalid stewards files ' do
@@ -399,7 +399,7 @@ class PullHandlerTest < ActiveSupport::TestCase
 
     Rails.logger.expects(:error).with(regexp_matches(/Error parsing file sub\/stewards.yml: Stewards file must contain a hash\n.*/))
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
   test 'handle omits notifying of views/stewards without changes' do
@@ -428,10 +428,10 @@ class PullHandlerTest < ActiveSupport::TestCase
       )
     }
 
-    assert_deep_hash expected, Ladle::PullHandler.new(client).handle(@pull_request)
+    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test "collect_changes" do
+  test "append_changes" do
     tree = Ladle::StewardTree.new([
       Ladle::StewardRules.new(ref:           'base',
                               stewards_file: 'stewards.yml',
@@ -462,8 +462,8 @@ class PullHandlerTest < ActiveSupport::TestCase
       build(:file_change, file: 'sub3/stewards.yml')
     )
 
-    handler = Ladle::PullHandler.new(mock('client'))
-    resolved_stewards_registry = handler.send(:collect_changes, stewards_trees, changed_files)
+    handler = Ladle::PullRequestChangeCollector.new(mock('client'))
+    resolved_stewards_registry = handler.send(:append_changes, stewards_trees, changed_files)
 
     expected_changes_view = Ladle::ChangesView.new(
       {

@@ -9,11 +9,11 @@ class NotifyStewardsOfPullRequestChangesTest < ActiveSupport::TestCase
     @pull_request = create(:pull_request)
   end
 
-  test "PullHandler uses github client" do
-    handler_mock = mock
-    handler_mock.expects(:handle).returns({})
+  test "PullRequestChangeCollector uses github client" do
+    collector_mock = mock
+    collector_mock.expects(:collect_changes).returns({})
 
-    Ladle::PullHandler.expects(:new).with(is_a(Ladle::GithubRepositoryClient)).returns(handler_mock)
+    Ladle::PullRequestChangeCollector.expects(:new).with(is_a(Ladle::GithubRepositoryClient)).returns(collector_mock)
 
     Ladle::NotifyStewardsOfPullRequestChanges.call(@pull_request)
   end
@@ -21,7 +21,7 @@ class NotifyStewardsOfPullRequestChangesTest < ActiveSupport::TestCase
   test 'open pull request is handled and stewards are notified' do
     stewards_map = Ladle::TestData.create_stewards_map
 
-    Ladle::PullHandler.any_instance.expects(:handle).with(@pull_request).returns(stewards_map)
+    Ladle::PullRequestChangeCollector.any_instance.expects(:collect_changes).with(@pull_request).returns(stewards_map)
     Ladle::StewardNotifier.any_instance.expects(:notify).with(stewards_map)
 
     Rails.logger.expects(:info).with("Found #{stewards_map.size} stewards. Notifying.")
@@ -30,7 +30,7 @@ class NotifyStewardsOfPullRequestChangesTest < ActiveSupport::TestCase
   end
 
   test "open pull request is handled but doesn't notify if there are no stewards" do
-    Ladle::PullHandler.any_instance.expects(:handle).returns({})
+    Ladle::PullRequestChangeCollector.any_instance.expects(:collect_changes).returns({})
     Ladle::StewardNotifier.any_instance.expects(:notify).never
 
     Rails.logger.expects(:info).with('No stewards found. Doing nothing.')

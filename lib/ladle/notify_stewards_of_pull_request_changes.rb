@@ -1,5 +1,5 @@
 require 'ladle/github_repository_client'
-require 'ladle/pull_handler'
+require 'ladle/pull_request_change_collector'
 require 'ladle/steward_notifier'
 
 module Ladle
@@ -7,16 +7,16 @@ module Ladle
 
     def self.call(pull_request)
       github_client = Ladle::GithubRepositoryClient.new(pull_request.repository)
-      pull_handler = Ladle::PullHandler.new(github_client)
+      collector = Ladle::PullRequestChangeCollector.new(github_client)
 
-      stewards_registry = pull_handler.handle(pull_request)
+      stewards_changes_map = collector.collect_changes(pull_request)
 
-      if stewards_registry.empty?
+      if stewards_changes_map.empty?
         Rails.logger.info('No stewards found. Doing nothing.')
       else
-        Rails.logger.info("Found #{stewards_registry.size} stewards. Notifying.")
+        Rails.logger.info("Found #{stewards_changes_map.size} stewards. Notifying.")
         notifier = Ladle::StewardNotifier.new(pull_request.repository.name, pull_request)
-        notifier.notify(stewards_registry)
+        notifier.notify(stewards_changes_map)
       end
     end
   end
