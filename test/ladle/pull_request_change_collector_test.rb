@@ -146,44 +146,6 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'notifies steward from same file across branches - remove duplicates' do
-    changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, status: :added, file: 'file1.txt', additions: 1),
-      build(:file_change, status: :added, file: 'file2.txt', additions: 1),
-      build(:file_change, status: :modified, file: 'stewards.yml', additions: 1)
-    )
-
-    client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
-
-    client.add_stewards_file(path: 'stewards.yml', ref: 'base_head', contents: <<-YAML)
-      stewards:
-        - github_username: someguy
-          include: file1.txt
-    YAML
-
-    client.add_stewards_file(path: 'stewards.yml', ref: 'branch_head', contents: <<-YAML)
-      stewards:
-        - github_username: someguy
-          include: file1.*
-    YAML
-
-    expected = {
-      'someguy' => Ladle::ChangesView.new(
-        rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                         stewards_file: 'stewards.yml',
-                                         file_filter:   Ladle::FileFilter.new(
-                                           include_patterns: ["file1.txt"]
-                                         ),
-        ),
-        changes: [
-                   build(:file_change, status: :added, file: 'file1.txt', additions: 1)
-                 ]
-      )
-    }
-
-    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
-  end
-
   test 'notifies old stewards' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
