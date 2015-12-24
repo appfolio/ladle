@@ -146,125 +146,65 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'collects old stewards' do
+  test 'includes previous stewards' do
     changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
-      build(:file_change, status: :added, file: 'one.rb', additions: 1),
-      build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
+      build(:file_change, status: :modified, file: 'sub/file1.txt', additions: 1),
       build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
-      build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
-      build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1),
-      build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
+      build(:file_change, status: :added, file: 'sub2/file2.txt', additions: 1),
+      build(:file_change, status: :removed, file: 'sub2/stewards.yml', deletions: 1),
     )
 
     client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
 
     client.define_tree('base_head') do |tree|
-      tree.file('sub3/stewards.yml', <<-YAML)
+      # stewards file removed on branch
+      tree.file('sub2/stewards.yml', <<-YAML)
         stewards:
-          - xanderstrike
-          - bob
+          - clinton
       YAML
 
+      # stewards file changed on branch
       tree.file('sub/stewards.yml', <<-YAML)
         stewards:
-          - jeb
-      YAML
-
-      tree.file('stewards.yml', <<-YAML)
-        stewards:
-          - xanderstrike
-          - bob
+          - george
       YAML
     end
 
     client.define_tree('branch_head') do |tree|
-      tree.file('sub2/stewards.yml', <<-YAML)
-        stewards:
-          - hamburglar
-      YAML
-
       tree.file('sub/stewards.yml', <<-YAML)
         stewards:
-          - xanderstrike
-          - fadsfadsfadsfadsf
+          - obama
       YAML
     end
 
-    expected_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :removed, file: 'stewards.yml', deletions: 1),
-                 build(:file_change, status: :added, file: 'one.rb', additions: 1),
-                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
-                 build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
-                 build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
-                 build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1),
-                 build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
-               ]
-    }
-
-    expected_branch_sub_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'branch_head',
-                                       stewards_file: 'sub/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
-                 build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1)
-               ]
-    }
-
-    expected_base_sub_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'sub/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :modified, file: 'sub/marine.rb', additions: 1),
-                 build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1)
-               ]
-    }
-
-    expected_sub2_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'branch_head',
-                                       stewards_file: 'sub2/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :removed, file: 'sub2/sandwich', deletions: 1),
-                 build(:file_change, status: :added, file: 'sub2/stewards.yml', additions: 1)
-
-               ]
-    }
-
-    expected_sub3_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'sub3/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :removed, file: 'sub3/stewards.yml', deletions: 1)
-               ]
-    }
-
     expected = {
-      'xanderstrike'      => Ladle::ChangesView.new(
-        expected_stewards_changes_view,
-        expected_branch_sub_stewards_changes_view,
-        expected_sub3_stewards_changes_view
-      ),
-      'fadsfadsfadsfadsf' => Ladle::ChangesView.new(
-        expected_branch_sub_stewards_changes_view,
-      ),
-      'bob'               => Ladle::ChangesView.new(
-        expected_stewards_changes_view,
-        expected_sub3_stewards_changes_view
-      ),
-      'jeb'               => Ladle::ChangesView.new(
-        expected_base_sub_stewards_changes_view,
-      ),
-      'hamburglar'        => Ladle::ChangesView.new(
-        expected_sub2_stewards_changes_view
-      )
+      'clinton'      => Ladle::ChangesView.new({
+                                                 rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                                                                  stewards_file: 'sub2/stewards.yml',
+                                                 ),
+                                                 changes: [
+                                                            build(:file_change, status: :added, file: 'sub2/file2.txt', additions: 1),
+                                                            build(:file_change, status: :removed, file: 'sub2/stewards.yml', deletions: 1),
+                                                          ]
+                                               }),
+      'george'      => Ladle::ChangesView.new({
+                                                 rules:   Ladle::StewardRules.new(ref:           'base_head',
+                                                                                  stewards_file: 'sub/stewards.yml',
+                                                 ),
+                                                 changes: [
+                                                            build(:file_change, status: :modified, file: 'sub/file1.txt', additions: 1),
+                                                            build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
+                                                          ]
+                                               }),
+      'obama'      => Ladle::ChangesView.new({
+                                                 rules:   Ladle::StewardRules.new(ref:           'branch_head',
+                                                                                  stewards_file: 'sub/stewards.yml',
+                                                 ),
+                                                 changes: [
+                                                            build(:file_change, status: :modified, file: 'sub/file1.txt', additions: 1),
+                                                            build(:file_change, status: :modified, file: 'sub/stewards.yml', additions: 1),
+                                                          ]
+                                               }),
     }
 
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
