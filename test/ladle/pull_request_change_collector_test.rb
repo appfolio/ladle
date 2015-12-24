@@ -210,61 +210,6 @@ class PullRequestChangeCollectorTest < ActiveSupport::TestCase
     assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
   end
 
-  test 'collects - stewards file not in changes_view' do
-    changed_files = Ladle::ChangedFiles.new(
-      build(:file_change, status: :added, file: 'goodbye/kitty/sianara.txt', additions: 1),
-      build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
-      build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1)
-    )
-
-    client = Ladle::StubbedRepoClient.new(@pull_request.number, Ladle::PullRequestInfo.new('branch_head', 'base_head'), changed_files)
-
-    client.define_tree('base_head') do |tree|
-
-      tree.file('hello/kitty/what/is/stewards.yml', <<-YAML)
-        stewards:
-          - xanderstrike
-          - bleh
-      YAML
-
-      tree.file('hello/stewards.yml', <<-YAML)
-        stewards:
-          - xanderstrike
-      YAML
-    end
-
-    expected_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'hello/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :added, file: 'hello/kitty/what/che.txt', additions: 1),
-                 build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-               ]
-    }
-
-    expected_sub_stewards_changes_view = {
-      rules:   Ladle::StewardRules.new(ref:           'base_head',
-                                       stewards_file: 'hello/kitty/what/is/stewards.yml',
-      ),
-      changes: [
-                 build(:file_change, status: :removed, file: 'hello/kitty/what/is/stewards.yml', deletions: 1),
-               ]
-    }
-
-    expected = {
-      'xanderstrike' => Ladle::ChangesView.new(
-        expected_stewards_changes_view,
-        expected_sub_stewards_changes_view
-      ),
-      'bleh'         => Ladle::ChangesView.new(
-        expected_sub_stewards_changes_view
-      ),
-    }
-
-    assert_deep_hash expected, Ladle::PullRequestChangeCollector.new(client).collect_changes(@pull_request)
-  end
-
   test 'collect_changes handles invalid stewards files ' do
     changed_files = Ladle::ChangedFiles.new(
       build(:file_change, status: :added, file: 'one.rb', additions: 1),
