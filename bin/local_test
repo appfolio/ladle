@@ -3,8 +3,7 @@ require File.expand_path('../../test/test_helper', __FILE__)
 
 require 'ladle'
 
-require 'ladle/pull_handler'
-require 'ladle/steward_notifier'
+require 'ladle/pull_request_change_collector'
 require 'ladle/local_repository_client'
 
 class LocalRepoTest < ActiveSupport::TestCase
@@ -17,12 +16,10 @@ class LocalRepoTest < ActiveSupport::TestCase
                                               base_ref: 'dbe4952c800c9d50fb61e68d883765d907995200',
                                               head_ref: '6d6ebd991450ea1a95ca431ec5cd60764d99ef24')
 
-    notifier = Ladle::StewardNotifier.new("ladle-stage", pull_request)
-
-    pull_handler = Ladle::PullHandler.new(client, notifier)
+    collector = Ladle::PullRequestChangeCollector.new(client)
 
     ActionMailer::Base.logger = ::Logger.new(STDOUT)
-    pull_handler.handle(pull_request)
+    pp collector.collect_changes(pull_request)
   end
 end
 

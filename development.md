@@ -33,5 +33,5 @@ You can test the application against a remote repository on Github using the fol
 You can test the handling of PRs using a local repository on the file system using `Ladle::LocalRepositoryClient`:
 
 1. Setup a local repository with scenarios you would like to test.
-2. Create a `Ladle::LocalRepositoryClient` and run it through `Ladle::PullHandler`.
+2. Create a `Ladle::LocalRepositoryClient` and run it through `Ladle::PullRequestChangeCollector`.
 3. See [bin/local_test](bin/local_test) for an example.

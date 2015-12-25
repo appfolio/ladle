@@ -29,5 +29,13 @@ module Ladle
         }
       )
     end
+
+    def self.create_stewards_map
+      {
+        'xanderstrike' => create_changes_view,
+        'counterstrike'=> create_changes_view,
+        'boop'         => create_changes_view
+      }
+    end
   end
 end

@@ -1,6 +1,4 @@
-require 'ladle/pull_handler'
-require 'ladle/steward_notifier'
-require 'ladle/github_repository_client'
+require 'ladle/notify_stewards_of_pull_request_changes'
 
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
@@ -9,22 +7,19 @@ class GithubEventsController < ApplicationController
   before_filter :verify_signature, only: [:payload]
 
   def payload
-    pull_request = params.require(:pull_request)
+    number              = params.require(:number)
+    pull_request_params = params.require(:pull_request)
+    pull_request_state  = pull_request_params.require(:state)
 
-    if pull_request[:state] == 'open'
-      number = params.require(:number)
-      Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
+    Rails.logger.info "New pull ##{number} for #{@repository.name}. Running handler..."
 
-      pull_request = find_pull_request({
-                                         number:   number,
-                                         html_url: pull_request[:html_url],
-                                         title:    pull_request[:title],
-                                         body:     pull_request[:body],
-                                       })
+    if pull_request_state == 'open'
+      pull_request = find_pull_request(number:   number,
+                                       html_url: pull_request_params[:html_url],
+                                       title:    pull_request_params[:title],
+                                       body:     pull_request_params[:body])
 
-      notifier = Ladle::StewardNotifier.new(@repository.name, pull_request)
-      github_client = Ladle::GithubRepositoryClient.new(@repository)
-      Ladle::PullHandler.new(github_client, notifier).handle(pull_request)
+      Ladle::NotifyStewardsOfPullRequestChanges.(pull_request)
     else
       Rails.logger.info 'Pull closed, doing nothing.'
     end
@@ -34,12 +29,12 @@ class GithubEventsController < ApplicationController
 
   private
 
-  def find_pull_request(data)
+  def find_pull_request(number:, html_url:, title:, body:)
     ActiveRecord::Base.transaction do
-      pull_request = PullRequest.find_or_create_by!(repository: @repository, number: data[:number], html_url: data[:html_url])
+      pull_request = PullRequest.find_or_create_by!(repository: @repository, number: number, html_url: html_url)
       pull_request.update_attributes!(
-        title: data[:title],
-        body:  data[:body]
+        title: title,
+        body:  body
       )
       pull_request
     end

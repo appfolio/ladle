@@ -1,7 +1,7 @@
 require 'test_helper'
 
 require 'ladle/local_repository_client'
-require 'ladle/pull_handler'
+require 'ladle/pull_request_change_collector'
 
 class LocalRepositoryClientTest < ActiveSupport::TestCase
 
@@ -78,8 +78,8 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     assert_equal "No support for status :what", raised.message
   end
 
-  test "works with PullHandler" do
-    handler_state = states('handler_state').starts_as('finding_files')
+  test "works with PullRequestChangeCollector" do
+    collector_state = states('collector_state').starts_as('finding_files')
 
     deltas = [
       mock(status: :added, new_file: {path: "one.rb"}),
@@ -89,9 +89,9 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     commit = mock
 
     rugged_client = Rugged::Repository.any_instance
-    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_files')).returns(commit)
+    rugged_client.expects(:lookup).with("base_head").when(collector_state.is('finding_files')).returns(commit)
 
-    commit.expects(:diff).with('branch_head').returns(mock(deltas: deltas)).when(handler_state.is('finding_files')).then(handler_state.is('finding_content'))
+    commit.expects(:diff).with('branch_head').returns(mock(deltas: deltas)).when(collector_state.is('finding_files')).then(collector_state.is('finding_content'))
 
     content = <<-YAML
       stewards:
@@ -103,16 +103,13 @@ class LocalRepositoryClientTest < ActiveSupport::TestCase
     tree.expects(:walk_blobs).twice.multiple_yields(["",{name: "some_file.bleh"}], ["sub", {name: "stewards.yml", oid: "object_id"}])
 
     content_sequence = sequence('content')
-    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
-    rugged_client.expects(:lookup).with("base_head").when(handler_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
+    rugged_client.expects(:lookup).with("base_head").when(collector_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
+    rugged_client.expects(:lookup).with("base_head").when(collector_state.is('finding_content')).in_sequence(content_sequence).returns(mock('commit', tree: tree))
     rugged_client.expects(:lookup).with('object_id').returns(mock(content: content))
 
-    notifier = mock
-    notifier.expects(:notify)
-
-    handler = Ladle::PullHandler.new(@client, notifier)
+    collector = Ladle::PullRequestChangeCollector.new(@client)
 
     pull_request = create(:pull_request, repository: @repository)
-    handler.handle(pull_request)
+    collector.collect_changes(pull_request)
   end
 end

@@ -1,7 +1,7 @@
 require 'test_helper'
 
 require 'ladle/github_repository_client'
-require 'ladle/pull_handler'
+require 'ladle/pull_request_change_collector'
 
 class GithubRepositoryClientTest < ActiveSupport::TestCase
 
@@ -66,7 +66,7 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
     assert_equal Octokit::NotFound, raised.cause.class
   end
 
-  test "works with PullHandler" do
+  test "works with PullRequestChangeCollector" do
     expected_result = {
       head: {
         sha: 'branch_head'
@@ -78,8 +78,6 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
 
     octokit_client = Octokit::Client.any_instance
     octokit_client.expects(:pull_request).with(@repository.name, 12).returns(expected_result)
-
-    handler_state = states('handler_state').starts_as('finding_files')
 
     expected_result = [
       {status: "added", filename: 'one.rb'},
@@ -100,13 +98,10 @@ class GithubRepositoryClientTest < ActiveSupport::TestCase
       .with(@repository.name, path: 'stewards.yml', ref: 'base_head')
       .raises(Octokit::NotFound)
 
-    notifier = mock
-    notifier.expects(:notify)
-
-    handler = Ladle::PullHandler.new(@client, notifier)
+    collector = Ladle::PullRequestChangeCollector.new(@client)
 
     pull_request = create(:pull_request, repository: @repository, number: 12)
-    handler.handle(pull_request)
+    collector.collect_changes(pull_request)
   end
 
   private

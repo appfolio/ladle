@@ -3,27 +3,19 @@ require 'ladle/steward_rules'
 require 'ladle/steward_tree'
 
 module Ladle
-  class PullHandler
-    def initialize(client, notifier)
+  class PullRequestChangeCollector
+    def initialize(client)
       @client = client
-      @notifier = notifier
     end
 
-    def handle(pull_request)
+    def collect_changes(pull_request)
       pr_info = @client.pull_request(pull_request.number)
 
       pr_files = @client.pull_request_files(pull_request.number)
 
       stewards_trees = collect_stewards_rules(pr_info, pr_files)
 
-      stewards_registry = collect_changes(stewards_trees, pr_files)
-
-      if stewards_registry.empty?
-        Rails.logger.info('No stewards found. Doing nothing.')
-      else
-        Rails.logger.info("Found #{stewards_registry.size} stewards. Notifying.")
-        @notifier.notify(stewards_registry)
-      end
+      append_changes(stewards_trees, pr_files)
     end
 
     private
@@ -62,7 +54,7 @@ module Ladle
       Rails.logger.error("Error parsing file #{stewards_file_path}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
-    def collect_changes(stewards_trees, pull_request_files)
+    def append_changes(stewards_trees, pull_request_files)
       output = {}
 
       stewards_trees.each do |github_username, steward_tree|

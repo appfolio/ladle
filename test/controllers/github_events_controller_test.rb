@@ -1,10 +1,14 @@
 require 'test_helper'
 
+require 'ladle/notify_stewards_of_pull_request_changes'
+require 'ladle/test_data'
+
 class GithubEventsControllerTest < ActionController::TestCase
-  test 'should get payload' do
+
+  test "payloads with invalid signatures are processed" do
     repository = create_repository
 
-    Ladle::PullHandler.any_instance.stubs(:handle)
+    Ladle::NotifyStewardsOfPullRequestChanges.expects(:call)
 
     payload = {}.to_json
     signature = repository.compute_webhook_signature(payload)
@@ -51,26 +55,22 @@ class GithubEventsControllerTest < ActionController::TestCase
     assert_response :forbidden
   end
 
-  test 'handles the pull when opened' do
+  test 'open pull request is handled' do
     repository = create_repository
-
-    handler_mock = mock
-    handler_mock.expects(:handle).with(all_of(
-                                         is_a(PullRequest),
-                                         responds_with(:number, 5),
-                                         responds_with(:html_url, 'www.test.com'),
-                                         responds_with(:title, 'Hello Dude'),
-                                         responds_with(:body, "We did it!"),
-                                       ))
-
-    Ladle::PullHandler.expects(:new).with(
-      is_a(Ladle::GithubRepositoryClient),
-      is_a(Ladle::StewardNotifier),
-    ).returns(handler_mock)
 
     @controller.expects(:verify_signature)
 
+    Ladle::NotifyStewardsOfPullRequestChanges.expects(:call).with(all_of(
+                                                                    is_a(PullRequest),
+                                                                    responds_with(:number, 5),
+                                                                    responds_with(:html_url, 'www.test.com'),
+                                                                    responds_with(:title, 'Hello Dude'),
+                                                                    responds_with(:body, "We did it!"),
+                                                                  ))
+
     assert_difference('PullRequest.count') do
+      Rails.logger.expects(:info).with("New pull #5 for #{repository.name}. Running handler...")
+
       post :payload, {}.to_json,
            format:       :json,
            number:       5,
@@ -93,7 +93,11 @@ class GithubEventsControllerTest < ActionController::TestCase
     signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), repository.webhook_secret, payload)
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
 
-    Ladle::PullHandler.expects(:new).never
+    Ladle::NotifyStewardsOfPullRequestChanges.expects(:call).never
+
+    Rails.logger.expects(:info).with("New pull #5 for #{repository.name}. Running handler...")
+    Rails.logger.expects(:info).with('Pull closed, doing nothing.')
+
     assert_no_difference('PullRequest.count') do
       post :payload, payload, format: :json, number: 5, pull_request: { state: 'closed' }, repository: { full_name: repository.name }
     end
@@ -101,15 +105,12 @@ class GithubEventsControllerTest < ActionController::TestCase
     assert_response :success
   end
 
-  test 'handles the pull - updates pull request' do
+  test 'already-recorded pull requests are updated' do
     repository = create_repository
 
     pull_request = create(:pull_request, repository: repository, number: 5, body: "old description", title: "old title")
 
-    handler_mock = mock
-    handler_mock.expects(:handle)
-
-    Ladle::PullHandler.expects(:new).with(is_a(Ladle::GithubRepositoryClient), is_a(Ladle::StewardNotifier)).returns(handler_mock)
+    Ladle::NotifyStewardsOfPullRequestChanges.expects(:call)
 
     @controller.expects(:verify_signature)
 
