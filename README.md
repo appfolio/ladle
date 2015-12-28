@@ -87,7 +87,9 @@ Currently, repositories are added manually via the below. In the future, we coul
 5. Via the [Rails console on Heroku](https://devcenter.heroku.com/articles/getting-started-with-rails4#console) create a new `Repository` model:
 
   ```ruby
-    Repository.create!(name: 'dhh/f-bombs', webhook_secret: '<webhook_secret>', user: User.find_by_github_username('dhh'))
+    Repository.create!(name: 'dhh/f-bombs',
+                       webhook_secret: '<webhook_secret>',
+                       access_via: User.find_by_github_username('dhh'))
   ```
 
 ## Development
