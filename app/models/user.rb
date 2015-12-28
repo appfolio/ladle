@@ -9,6 +9,8 @@ class User < ActiveRecord::Base
   validates :github_username, presence: true, uniqueness: true
   validates :uid, presence: true
 
+  attr_encrypted :token, key: 'hello'
+
   def self.from_omniauth(auth)
     user = where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.provider = auth.provider
