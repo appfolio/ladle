@@ -82,6 +82,6 @@ class StewardNotifierTest < ActionController::TestCase
       notification = @notifier.send(:create_notification, [])
     end
 
-    assert_equal nil, notification
+    assert_nil notification
   end
 end
