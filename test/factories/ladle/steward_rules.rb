@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :steward_rules, class: "Ladle::StewardRules" do
     ref 'base'
     stewards_file 'stewards.yml'

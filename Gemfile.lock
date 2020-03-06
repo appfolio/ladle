@@ -77,10 +77,10 @@ GEM
     encryptor (1.3.0)
     erubis (2.7.0)
     execjs (2.7.0)
-    factory_girl (4.9.0)
+    factory_bot (4.11.1)
       activesupport (>= 3.0.0)
-    factory_girl_rails (4.9.0)
-      factory_girl (~> 4.9.0)
+    factory_bot_rails (4.11.1)
+      factory_bot (~> 4.11.1)
       railties (>= 3.0.0)
     faraday (1.0.0)
       multipart-post (>= 1.2, < 3)
@@ -256,7 +256,7 @@ DEPENDENCIES
   coveralls
   devise
   devise-bootstrap-views
-  factory_girl_rails (~> 4.0)
+  factory_bot_rails (~> 4.0)
   hashdiff (= 0.2.2)
   jbuilder (~> 2.0)
   jquery-rails

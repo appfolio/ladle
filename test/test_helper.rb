@@ -11,7 +11,7 @@ require 'webmock/minitest'
 require 'github_stubs'
 
 class MiniTest::Test
-  include FactoryGirl::Syntax::Methods
+  include FactoryBot::Syntax::Methods
 end
 
 class ActiveSupport::TestCase

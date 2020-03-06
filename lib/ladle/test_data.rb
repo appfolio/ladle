@@ -1,6 +1,6 @@
 module Ladle
   module TestData
-    extend FactoryGirl::Syntax::Methods
+    extend FactoryBot::Syntax::Methods
 
     def self.create_changes_view
       Ladle::ChangesView.new(

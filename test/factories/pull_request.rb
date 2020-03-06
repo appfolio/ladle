@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   sequence :number_sequence do |n|
     n.to_s
   end

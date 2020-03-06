@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :file_change, class: "Ladle::FileChange" do
     additions 0
     deletions 0
