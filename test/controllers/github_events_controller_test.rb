@@ -15,7 +15,7 @@ class GithubEventsControllerTest < ActionController::TestCase
 
     request.headers['HTTP_X_HUB_SIGNATURE'] = signature
 
-    post :payload, payload, format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: repository.name }
+    post :payload, body: payload, params: { format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: repository.name } }
     assert_response :success
   end
 
@@ -24,14 +24,14 @@ class GithubEventsControllerTest < ActionController::TestCase
 
     payload = {}.to_json
     request.headers['HTTP_X_HUB_SIGNATURE'] = 'stuff!'
-    post :payload, payload, format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: repository.name }
+    post :payload, body: payload, params: { format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: repository.name } }
 
     assert_response :forbidden
   end
 
   test 'required parameters repository' do
     raised = assert_raises(ActionController::ParameterMissing) do
-      post :payload, {}.to_json, format: :json, number: 5, pull_request: { }
+      post :payload, body: {}.to_json, params: { format: :json, number: 5, pull_request: { } }
     end
 
     assert_equal :repository, raised.param
@@ -43,14 +43,14 @@ class GithubEventsControllerTest < ActionController::TestCase
     @controller.expects(:verify_signature)
 
     raised = assert_raises(ActionController::ParameterMissing) do
-      post :payload, {}.to_json, format: :json, number: 5, repository: { full_name: repository.name }
+      post :payload, body: {}.to_json, params: { format: :json, number: 5, repository: { full_name: repository.name } }
     end
 
     assert_equal :pull_request, raised.param
   end
 
   test 'repository does not exist' do
-    post :payload, {}.to_json, format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: 'test/test' }
+    post :payload, body: {}.to_json, params: { format: :json, number: 1, pull_request: { state: 'open' }, repository: { full_name: 'test/test' } }
 
     assert_response :forbidden
   end
@@ -71,16 +71,12 @@ class GithubEventsControllerTest < ActionController::TestCase
     assert_difference('PullRequest.count') do
       Rails.logger.expects(:info).with("New pull #5 for #{repository.name}. Running handler...")
 
-      post :payload, {}.to_json,
-           format:       :json,
-           number:       5,
-           pull_request: {
+      post :payload, body: {}.to_json, params: { format:       :json, number:       5, pull_request: {
              state:    'open',
              html_url: 'www.test.com',
              title:    'Hello Dude',
              body:     "We did it!"
-           },
-           repository:   {full_name: repository.name}
+           }, repository:   {full_name: repository.name} }
     end
 
     assert_response :success
@@ -99,7 +95,7 @@ class GithubEventsControllerTest < ActionController::TestCase
     Rails.logger.expects(:info).with('Pull closed, doing nothing.')
 
     assert_no_difference('PullRequest.count') do
-      post :payload, payload, format: :json, number: 5, pull_request: { state: 'closed' }, repository: { full_name: repository.name }
+      post :payload, body: payload, params: { format: :json, number: 5, pull_request: { state: 'closed' }, repository: { full_name: repository.name } }
     end
 
     assert_response :success
@@ -115,16 +111,19 @@ class GithubEventsControllerTest < ActionController::TestCase
     @controller.expects(:verify_signature)
 
     assert_no_difference('PullRequest.count') do
-      post :payload, {}.to_json,
-           format:       :json,
-           number:       pull_request.number,
-           pull_request: {
-             state:    'open',
-             html_url: pull_request.html_url,
-             title:    'Hello Dude',
-             body:     "We did it!"
-           },
-           repository:   {full_name: repository.name}
+      post :payload, body: {}.to_json, params: {
+        format: :json,
+        number: pull_request.number,
+        pull_request: {
+          state: 'open',
+          html_url: pull_request.html_url,
+          title: 'Hello Dude',
+          body: "We did it!"
+        },
+        repository: {
+          full_name: repository.name
+        }
+      }
     end
 
     assert_response :success
