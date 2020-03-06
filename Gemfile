@@ -61,6 +61,7 @@ end
 
 group :test do
   gem 'mocha'
+  gem 'minitest', '5.10.3'
   gem 'webmock'
   gem 'coveralls', require: false
   gem 'rugged', require: false
