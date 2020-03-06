@@ -15,7 +15,7 @@ class GithubEventsController < ApplicationController
 
     if pull_request_state == 'open'
       pull_request = find_pull_request(number:   number,
-                                       html_url: pull_request_params[:html_url],
+                                       html_url: pull_request_params[:html_url].presence,
                                        title:    pull_request_params[:title],
                                        body:     pull_request_params[:body])
 
