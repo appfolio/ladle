@@ -69,6 +69,7 @@ class GithubEventsControllerTest < ActionController::TestCase
                                                                   ))
 
     assert_difference('PullRequest.count') do
+      Rails.logger.stubs(:info)
       Rails.logger.expects(:info).with("New pull #5 for #{repository.name}. Running handler...")
 
       post :payload, body: {}.to_json, params: { format:       :json, number:       5, pull_request: {
@@ -91,6 +92,7 @@ class GithubEventsControllerTest < ActionController::TestCase
 
     Ladle::NotifyStewardsOfPullRequestChanges.expects(:call).never
 
+    Rails.logger.stubs(:info)
     Rails.logger.expects(:info).with("New pull #5 for #{repository.name}. Running handler...")
     Rails.logger.expects(:info).with('Pull closed, doing nothing.')
 
