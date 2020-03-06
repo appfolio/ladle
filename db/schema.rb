@@ -1,4 +1,3 @@
-# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -25,10 +24,9 @@ ActiveRecord::Schema.define(version: 20151228174119) do
   create_table "notified_users", force: :cascade do |t|
     t.integer "notification_id"
     t.integer "user_id"
+    t.index ["notification_id"], name: "index_notified_users_on_notification_id", using: :btree
+    t.index ["user_id"], name: "index_notified_users_on_user_id", using: :btree
   end
-
-  add_index "notified_users", ["notification_id"], name: "index_notified_users_on_notification_id", using: :btree
-  add_index "notified_users", ["user_id"], name: "index_notified_users_on_user_id", using: :btree
 
   create_table "pull_requests", force: :cascade do |t|
     t.integer  "number",        null: false
@@ -46,9 +44,8 @@ ActiveRecord::Schema.define(version: 20151228174119) do
     t.datetime "created_at",     null: false
     t.datetime "updated_at",     null: false
     t.integer  "access_via_id",  null: false
+    t.index ["name"], name: "index_repositories_on_name", unique: true, using: :btree
   end
-
-  add_index "repositories", ["name"], name: "index_repositories_on_name", unique: true, using: :btree
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
@@ -67,13 +64,12 @@ ActiveRecord::Schema.define(version: 20151228174119) do
     t.string   "uid"
     t.string   "github_username"
     t.string   "encrypted_token"
+    t.index ["email"], name: "index_users_on_email", unique: true, using: :btree
+    t.index ["github_username"], name: "index_users_on_github_username", unique: true, using: :btree
+    t.index ["provider"], name: "index_users_on_provider", using: :btree
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
+    t.index ["uid"], name: "index_users_on_uid", using: :btree
   end
-
-  add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
-  add_index "users", ["github_username"], name: "index_users_on_github_username", unique: true, using: :btree
-  add_index "users", ["provider"], name: "index_users_on_provider", using: :btree
-  add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
-  add_index "users", ["uid"], name: "index_users_on_uid", using: :btree
 
   add_foreign_key "notifications", "pull_requests"
   add_foreign_key "pull_requests", "repositories"
