@@ -24,7 +24,7 @@ class GithubEventsController < ApplicationController
       Rails.logger.info 'Pull closed, doing nothing.'
     end
 
-    render status: :ok, nothing: true
+    head :ok
   end
 
   private
@@ -45,7 +45,7 @@ class GithubEventsController < ApplicationController
 
     @repository = Repository.find_by_name(repository[:full_name])
     unless @repository
-      render status: :forbidden, nothing: true
+      head :forbidden
     end
   end
 
@@ -57,7 +57,7 @@ class GithubEventsController < ApplicationController
 
     unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'] || '')
       Rails.logger.info "Signature mismatch - recv: <#{request.env['HTTP_X_HUB_SIGNATURE'].inspect}> calc <#{signature.inspect}>"
-      render status: :forbidden, nothing: true
+      head :forbidden
     end
   end
 end
