@@ -3,8 +3,8 @@ require 'ladle/notify_stewards_of_pull_request_changes'
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
-  before_filter :find_repository, only: [:payload]
-  before_filter :verify_signature, only: [:payload]
+  before_action :find_repository, only: [:payload]
+  before_action :verify_signature, only: [:payload]
 
   def payload
     number              = params.require(:number)
