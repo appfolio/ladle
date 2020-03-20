@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   sequence :dhh_email do |n|
     "dhh#{n}@rails.com"
   end
@@ -9,8 +9,8 @@ FactoryGirl.define do
 
   factory :user do
     email { generate(:dhh_email) }
-    password "railsrules"
-    token "1ea7ca751ea7ca751ea7ca751ea7ca75"
+    password { "railsrules" }
+    token { "1ea7ca751ea7ca751ea7ca751ea7ca75" }
     uid { generate(:dhh_github_username) }
     github_username { generate(:dhh_github_username) }
   end

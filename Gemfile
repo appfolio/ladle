@@ -1,10 +1,10 @@
 source 'https://rubygems.org'
-ruby '2.2.3'
+ruby '2.5.7'
 
 gem 'rails_12factor', group: :production
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.4'
+gem 'rails', '5.0.7.2'
 # Use sqlite3 as the database for Active Record
 gem 'pg'
 # Use SCSS for stylesheets
@@ -39,7 +39,7 @@ gem 'omniauth-github'
 gem 'octokit', '~> 4.1'
 
 gem 'simple_form', '~> 3.2'
-gem 'factory_girl_rails', '~> 4.0'
+gem 'factory_bot_rails', '~> 4.0'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
@@ -61,10 +61,12 @@ end
 
 group :test do
   gem 'mocha'
+  gem 'minitest', '5.10.3'
   gem 'webmock'
   gem 'coveralls', require: false
   gem 'rugged', require: false
   gem 'hashdiff', '0.2.2'
+  gem 'rails-controller-testing'
 end
 
 

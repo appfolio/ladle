@@ -18,7 +18,7 @@ class UserSettingsControllerTest < ActionController::TestCase
   end
 
   test "update success" do
-    patch :update, user: {email: "zima@somethingdifferent.com"}
+    patch :update, params: { user: {email: "zima@somethingdifferent.com"} }
     assert_redirected_to edit_user_settings_path
 
     @user.reload
@@ -35,7 +35,7 @@ class UserSettingsControllerTest < ActionController::TestCase
 
   test "update missing parameters - email" do
     GithubStubs.stub_emails(@user.token)
-    patch :update, user: {biz: :baz}
+    patch :update, params: { user: {biz: :baz} }
     assert_response :unprocessable_entity
 
     view = assigns(:view)

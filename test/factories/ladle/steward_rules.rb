@@ -1,8 +1,8 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :steward_rules, class: "Ladle::StewardRules" do
-    ref 'base'
-    stewards_file 'stewards.yml'
-    file_filter nil
+    ref { 'base' }
+    stewards_file { 'stewards.yml' }
+    file_filter { nil }
 
     initialize_with do
       new(ref:           ref,

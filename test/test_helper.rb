@@ -5,12 +5,13 @@ Coveralls.wear!('rails')
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rails/test_help'
-require 'mocha/mini_test'
+require 'mocha/minitest'
+require 'webmock/minitest'
 
 require 'github_stubs'
 
 class MiniTest::Test
-  include FactoryGirl::Syntax::Methods
+  include FactoryBot::Syntax::Methods
 end
 
 class ActiveSupport::TestCase
@@ -21,5 +22,5 @@ class ActiveSupport::TestCase
 end
 
 class ActionController::TestCase
-  include Devise::TestHelpers
+  include Devise::Test::ControllerHelpers
 end

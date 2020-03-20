@@ -3,8 +3,8 @@ require 'ladle/notify_stewards_of_pull_request_changes'
 class GithubEventsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
-  before_filter :find_repository, only: [:payload]
-  before_filter :verify_signature, only: [:payload]
+  before_action :find_repository, only: [:payload]
+  before_action :verify_signature, only: [:payload]
 
   def payload
     number              = params.require(:number)
@@ -15,7 +15,7 @@ class GithubEventsController < ApplicationController
 
     if pull_request_state == 'open'
       pull_request = find_pull_request(number:   number,
-                                       html_url: pull_request_params[:html_url],
+                                       html_url: pull_request_params[:html_url].presence,
                                        title:    pull_request_params[:title],
                                        body:     pull_request_params[:body])
 
@@ -24,7 +24,7 @@ class GithubEventsController < ApplicationController
       Rails.logger.info 'Pull closed, doing nothing.'
     end
 
-    render status: :ok, nothing: true
+    head :ok
   end
 
   private
@@ -45,7 +45,7 @@ class GithubEventsController < ApplicationController
 
     @repository = Repository.find_by_name(repository[:full_name])
     unless @repository
-      render status: :forbidden, nothing: true
+      head :forbidden
     end
   end
 
@@ -57,7 +57,7 @@ class GithubEventsController < ApplicationController
 
     unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'] || '')
       Rails.logger.info "Signature mismatch - recv: <#{request.env['HTTP_X_HUB_SIGNATURE'].inspect}> calc <#{signature.inspect}>"
-      render status: :forbidden, nothing: true
+      head :forbidden
     end
   end
 end
