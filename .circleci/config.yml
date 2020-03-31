@@ -1,4 +1,3 @@
-# .circleci/config.yml
 version: 2.1
 jobs:
   build-and-test:
@@ -8,11 +7,13 @@ jobs:
           PGHOST: 127.0.0.1
           PGUSER: ubuntu
           RAILS_ENV: test
+
       - image: circleci/postgres:9.6
         environment:
           POSTGRES_USER: ubuntu
           POSTGRES_PASSWORD: $POSTGRES_PASSWORD
           POSTGRES_DB: ladle_test
+
     working_directory: ~/repo
 
     steps:
@@ -51,9 +52,37 @@ jobs:
           command: |
             bundle exec rake test
 
+      - store_artifacts:
+          path: ~/repo/log
+
+  sourceclear:
+    docker:
+      - image: circleci/ruby:2.6.3-node-browsers
+    working_directory: ~/repo
+    steps:
+      - checkout
+
+      - run:
+          name:  SourceClear Scan
+          command: |
+              git clone -b $SRCCLR_GIT_RELEASE git@github.com:appfolio/security-ids.git ~/security-ids --single-branch
+              ~/security-ids/scripts/srcclr_circle-ci.sh -c 'ladle-guild'
+
 workflows:
   version: 2.1
-  test:
+  rc:
     jobs:
       - build-and-test:
           context: appfolio_test_context
+
+  scheduled:
+    triggers:
+      - schedule:
+          cron: "0 14 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - sourceclear:
+          context: appfolio_sourceclear
