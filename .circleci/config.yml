@@ -1,0 +1,59 @@
+# .circleci/config.yml
+version: 2.1
+jobs:
+  build-and-test:
+    docker:
+      - image: circleci/ruby:2.5.7-node-browsers
+        environment:
+          PGHOST: 127.0.0.1
+          PGUSER: ubuntu
+          RAILS_ENV: test
+      - image: circleci/postgres:9.6
+        environment:
+          POSTGRES_USER: ubuntu
+          POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+          POSTGRES_DB: ladle_test
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run:
+          name: Wait for db
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "Gemfile.lock" }}
+          - v1-dependencies-
+
+      - run:
+          name: authenticate with Gemini
+          command: |
+            bundle config gemini.atl.appfolio.net $GEMINI_USER:$GEMINI_PASSWORD
+
+      - run:
+          name: install dependencies
+          command: |
+            bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+      - save_cache:
+          paths:
+            - vendor/bundle
+          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+
+      - run: RAILS_ENV=test bundle exec rake db:create
+      - run: RAILS_ENV=test bundle exec rake db:schema:load
+      - run: RAILS_ENV=test bundle exec rake db:seed
+
+      - run:
+          name: run tests
+          command: |
+            bundle exec rake test
+
+workflows:
+  version: 2.1
+  test:
+    jobs:
+      - build-and-test:
+          context: appfolio_test_context
