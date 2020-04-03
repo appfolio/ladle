@@ -43,6 +43,11 @@ jobs:
             - vendor/bundle
           key: v1-dependencies-{{ checksum "Gemfile.lock" }}
 
+      - run:
+          name: configure attr_accessor keys
+          command: |
+            echo 'export TOKEN_KEY=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`' >> $BASH_ENV
+
       - run: RAILS_ENV=test bundle exec rake db:create
       - run: RAILS_ENV=test bundle exec rake db:schema:load
       - run: RAILS_ENV=test bundle exec rake db:seed
