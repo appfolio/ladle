@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151228174119) do
+ActiveRecord::Schema.define(version: 20200403190130) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -63,7 +63,9 @@ ActiveRecord::Schema.define(version: 20151228174119) do
     t.string   "provider"
     t.string   "uid"
     t.string   "github_username"
+    t.string   "encrypted_token_old"
     t.string   "encrypted_token"
+    t.string   "encrypted_token_iv"
     t.index ["email"], name: "index_users_on_email", unique: true, using: :btree
     t.index ["github_username"], name: "index_users_on_github_username", unique: true, using: :btree
     t.index ["provider"], name: "index_users_on_provider", using: :btree
