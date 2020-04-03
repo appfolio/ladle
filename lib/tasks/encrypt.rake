@@ -6,14 +6,16 @@ namespace :encrypt do
     updated_count = 0
     error_count = 0
 
-    User.find_each do |user|
-      user.token = user.token_old
+    ActiveRecord::Base.transaction do
+      User.find_each do |user|
+        user.token = user.token_old
 
-      if user.save
-        updated_count += 1
-      else
-        puts "** Error while updating ID: #{user.id}"
-        error_count += 1
+        if user.save
+          updated_count += 1
+        else
+          puts "** Error while updating ID: #{user.id}"
+          error_count += 1
+        end
       end
     end
 
