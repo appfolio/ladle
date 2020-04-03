@@ -110,6 +110,7 @@ Ladle runs as a GitHub Application. The following ENV variables must be set:
 
   - `GH_APPLICATION_ID`
   - `GH_APPLICATION_SECRET`
+  - `TOKEN_KEY` # for encrypting OAuth tokens in the DB
 
 ### Email Notifications
 
