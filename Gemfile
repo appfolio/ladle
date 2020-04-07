@@ -22,8 +22,10 @@ gem 'jquery-rails'
 gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.0'
+# Adding direct dependency to move to secure version
+gem 'json', '~> 2.3'
 # bundle exec rake doc:rails generates the API under doc/api.
-gem 'sdoc', '~> 0.4.0', group: :doc
+gem 'sdoc', '~> 1.1.0', group: :doc
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
@@ -38,7 +40,7 @@ gem 'omniauth-github'
 
 gem 'octokit', '~> 4.1'
 
-gem 'simple_form', '~> 3.2'
+gem 'simple_form', '~> 5.0'
 gem 'factory_bot_rails', '~> 4.0'
 
 # Use Capistrano for deployment
