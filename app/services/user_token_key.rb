@@ -7,7 +7,7 @@ class UserTokenKey
     @token_key ||= begin
       token_key = Rails.application.config_for(:secrets)["token_key"]
       raise "Set TOKEN_KEY env var" unless token_key
-      raise "Token key must be 32 bytes" unless token_key.bytes.size == 32
+      raise "Token key must be 32 bytes. It is #{token_key.bytes.size}" unless token_key.bytes.size == 32
       token_key
     end
   end
