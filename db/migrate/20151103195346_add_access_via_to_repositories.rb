@@ -1,4 +1,4 @@
-class AddAccessViaToRepositories < ActiveRecord::Migration
+class AddAccessViaToRepositories < ActiveRecord::Migration[4.2]
   def change
     remove_column  :repositories, :access_token, :string, null: false
 
