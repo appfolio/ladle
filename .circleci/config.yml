@@ -35,7 +35,7 @@ jobs:
 
       - run: # Install rugged/libgit2 dependencies
           name: CMake Install
-          command: sudo apt-get install cmake
+          command: sudo apt-get update; sudo apt-get install cmake
 
       - run:
           name: install dependencies
