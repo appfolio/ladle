@@ -1,4 +1,4 @@
-class AssociateRepositoryToPullRequest < ActiveRecord::Migration
+class AssociateRepositoryToPullRequest < ActiveRecord::Migration[4.2]
   def up
     add_column :pull_requests, :repository_id, :integer
 
