@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build-and-test:
     docker:
-      - image: circleci/ruby:2.5.7-node-browsers
+      - image: circleci/ruby:2.6.3-node-browsers
         environment:
           PGHOST: 127.0.0.1
           PGUSER: ubuntu
@@ -35,7 +35,7 @@ jobs:
 
       - run: # Install rugged/libgit2 dependencies
           name: CMake Install
-          command: sudo apt-get install cmake
+          command: sudo apt-get update; sudo apt-get install cmake
 
       - run:
           name: install dependencies
