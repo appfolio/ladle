@@ -1,8 +1,10 @@
 version: 2.1
+orbs:
+  software-composition-analysis: appfolio/software-composition-analysis@volatile
 jobs:
   build-and-test:
     docker:
-      - image: circleci/ruby:2.6.3-node-browsers
+      - image: &ruby_image circleci/ruby:2.6.3-node-browsers
         environment:
           PGHOST: 127.0.0.1
           PGUSER: ubuntu
@@ -64,34 +66,26 @@ jobs:
       - store_artifacts:
           path: ~/repo/log
 
-  sourceclear:
-    docker:
-      - image: circleci/ruby:2.6.3-node-browsers
-    working_directory: ~/repo
-    steps:
-      - checkout
-
-      - run:
-          name:  SourceClear Scan
-          command: |
-              git clone -b $SRCCLR_GIT_RELEASE git@github.com:appfolio/security-ids.git ~/security-ids --single-branch
-              ~/security-ids/scripts/srcclr_circle-ci.sh -c 'ladle-guild'
-
 workflows:
   version: 2.1
-  rc:
-    jobs:
-      - build-and-test:
-          context: appfolio_test_context
-
-  scheduled:
+  weekly-software-composition-analysis-check:
     triggers:
       - schedule:
-          cron: "0 14 * * 1"
+          cron: 0 14 * * 1
           filters:
             branches:
               only:
                 - master
     jobs:
-      - sourceclear:
-          context: appfolio_sourceclear
+      - software-composition-analysis/scan:
+          application_image: *ruby_image
+          context: appfolio_software-composition-analysis
+      - software-composition-analysis/report:
+          context: appfolio_software-composition-analysis
+          requires:
+            - software-composition-analysis/scan
+          flags: "-c 'ladle-guild'"
+  rc:
+    jobs:
+      - build-and-test:
+          context: appfolio_test_context
