@@ -18,13 +18,13 @@ class NotificationsControllerTest < ActionController::TestCase
     get :index
     assert_response :success
 
-    notifications = assigns(:notifications)
-    assert_equal 2, notifications.size
+    assert_select '.pull-right', count: 2
 
-    notification2_presenter = notifications.first
-    assert_equal notification2, notification2_presenter.__getobj__
-
-    notification1_presenter = notifications.last
-    assert_equal notification1, notification1_presenter.__getobj__
+    pr = notification2.pull_request
+    pr2 = notification1.pull_request
+    assert_select 'h4' do |headers|
+      assert_match(/\[#{pr.repository.name}\] #{pr.title}/, headers[0])
+      assert_match(/\[#{pr2.repository.name}\] #{pr2.title}/, headers[1])
+    end
   end
 end
