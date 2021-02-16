@@ -8,13 +8,15 @@ class UserSettingsControllerTest < ActionController::TestCase
 
   test "edit" do
     GithubStubs.stub_emails(@user.token)
+
     get :edit
     assert_response :success
 
-    view = assigns(:view)
-
-    assert_equal @user, view.user
-    assert_equal ["dhh@rails.com", "dhh@internet.com"], view.emails
+    assert_select "form#edit_user_#{@user.id}"
+    assert_select 'option' do |options|
+      assert_equal 'dhh@rails.com', options[0].text
+      assert_equal 'dhh@internet.com', options[1].text
+    end
   end
 
   test "update success" do
@@ -38,12 +40,11 @@ class UserSettingsControllerTest < ActionController::TestCase
     patch :update, params: { user: {biz: :baz} }
     assert_response :unprocessable_entity
 
-    view = assigns(:view)
-
-    assert_equal @user, view.user
-    assert_equal ["dhh@rails.com", "dhh@internet.com"], view.emails
-
-    assert_equal [:email], view.user.errors.keys
-    assert_equal ["can't be blank"], view.user.errors[:email]
+    assert_select "form#edit_user_#{@user.id}"
+    assert_select 'option' do |options|
+      assert_equal 'dhh@rails.com', options[0].text
+      assert_equal 'dhh@internet.com', options[1].text
+    end
+    assert_select '.user_email.has-error', count: 1, text: /can't be blank/
   end
 end

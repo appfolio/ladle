@@ -66,8 +66,4 @@ group :test do
   gem 'coveralls', require: false
   gem 'rugged', require: false
   gem 'hashdiff', '0.2.2'
-  gem 'rails-controller-testing'
 end
-
-
-
