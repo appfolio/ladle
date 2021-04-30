@@ -29,7 +29,7 @@ gem 'sdoc', '~> 1.1.0', group: :doc
 
 gem 'attr_encrypted', '~> 3.0'
 
-gem 'puma'
+gem 'puma', ">= 4.3.5"
 
 gem 'devise'
 gem 'devise-bootstrap-views'
