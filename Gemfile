@@ -3,8 +3,7 @@ ruby '2.6.3'
 
 gem 'rails_12factor', group: :production
 
-# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '6.0.2.2'
+gem 'rails', '~> 6.0.3', '>= 6.0.3.5'
 # Use sqlite3 as the database for Active Record
 gem 'pg'
 # Use SCSS for stylesheets
@@ -30,7 +29,7 @@ gem 'sdoc', '~> 1.1.0', group: :doc
 
 gem 'attr_encrypted', '~> 3.0'
 
-gem 'puma'
+gem 'puma', ">= 4.3.5"
 
 gem 'devise'
 gem 'devise-bootstrap-views'
