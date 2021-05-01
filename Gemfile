@@ -3,6 +3,9 @@ ruby '2.6.3'
 
 gem 'rails_12factor', group: :production
 
+
+# test
+
 gem 'rails', '~> 6.0.3', '>= 6.0.3.5'
 # Use sqlite3 as the database for Active Record
 gem 'pg'
