@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  software-composition-analysis: appfolio/software-composition-analysis@volatile
 jobs:
   build-and-test:
     docker:
@@ -68,23 +66,6 @@ jobs:
 
 workflows:
   version: 2.1
-  weekly-software-composition-analysis-check:
-    triggers:
-      - schedule:
-          cron: 0 14 * * 1
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - software-composition-analysis/scan:
-          application_image: *ruby_image
-          context: appfolio_software-composition-analysis
-      - software-composition-analysis/report:
-          context: appfolio_software-composition-analysis
-          requires:
-            - software-composition-analysis/scan
-          flags: "-c 'ladle-guild'"
   rc:
     jobs:
       - build-and-test:
