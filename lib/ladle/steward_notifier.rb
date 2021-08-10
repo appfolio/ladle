@@ -8,11 +8,8 @@ module Ladle
     def notify(stewards_changes)
       notified_users = []
       stewards_changes.each do |github_username, changes_view|
-        user = User.find_by_github_username(github_username)
-
-        if user && ! user_has_been_notified?(user)
-          send_email(user, changes_view)
-          notified_users << user
+        Array.wrap(github_username).each do |username|
+          notify_user(notified_users, username, changes_view)
         end
       end
     ensure
@@ -20,6 +17,15 @@ module Ladle
     end
 
     private
+
+    def notify_user(notified_users, github_username, changes_view)
+      user = User.find_by_github_username(github_username)
+
+      if user && !user_has_been_notified?(user)
+        send_email(user, changes_view)
+        notified_users << user
+      end
+    end
 
     def user_has_been_notified?(user)
       user.notifications.where(pull_request: @pull_request).exists?

@@ -67,6 +67,29 @@ class StewardsFileParserTest < ActiveSupport::TestCase
     assert_equal expected_stewards, stewards_file.stewards
   end
 
+  test 'parse steward rules - multiple username' do
+    content = <<-YAML
+      stewards:
+       - github_username: 
+           - xanderstrike
+           - second-username
+         include:
+           - "**/bleh"
+           - "**/whatever"
+         exclude: "**/bleh/*.rb"
+       - bob
+    YAML
+
+    stewards_file = Ladle::StewardsFileParser.parse(content)
+
+    expected_stewards = [
+      Ladle::StewardConfig.new(github_username: %w[xanderstrike second-username], include_patterns: ["**/bleh", "**/whatever"], exclude_patterns: ["**/bleh/*.rb"]),
+      Ladle::StewardConfig.new(github_username: "bob"),
+    ]
+
+    assert_equal expected_stewards, stewards_file.stewards
+  end
+
   test 'parse steward rules - missing required key' do
     content = <<-YAML
       stewards:
