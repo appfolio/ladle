@@ -21,6 +21,17 @@ class StewardNotifierTest < ActionController::TestCase
     @notifier.notify(@steward_changes_views)
   end
 
+  test 'notify - github username is an array' do
+    stewards_map_with_array_github_username = Ladle::TestData.create_stewards_map_with_array_github_username
+    user1 = create(:user, github_username: 'xanderstrike')
+    user2 = create(:user, github_username: 'counterstrike')
+    @notifier.expects(:send_email).with(user1, @steward_changes_views['xanderstrike'])
+    @notifier.expects(:send_email).with(user2, @steward_changes_views['counterstrike'])
+    @notifier.expects(:create_notification).with([user1, user2])
+
+    @notifier.notify(stewards_map_with_array_github_username)
+  end
+
   test 'notify - error records notifications for non errored notifications' do
     user1 = create(:user, github_username: 'xanderstrike')
     user2 = create(:user, github_username: 'counterstrike')
