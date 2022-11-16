@@ -1,4 +1,7 @@
 version: 2.1
+orbs:
+  static-code-analysis: appfolio/static-code-analysis@volatile
+
 jobs:
   build-and-test:
     docker:
@@ -67,6 +70,22 @@ jobs:
 workflows:
   version: 2.1
   rc:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - build-and-test:
           context: appfolio_test_context
+  nightly-static-code-security-analysis:
+    # Configure trigger at https://app.circleci.com/settings/project/github/appfolio/ladle/triggers
+    when:
+      and:
+        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+        - equal: [ "Nightly static code security analysis", << pipeline.schedule.name >> ]
+    jobs:
+      - static-code-analysis/scan:
+          context: appfolio_static-code-analysis
+      - static-code-analysis/report:
+          context: appfolio_static-code-analysis
+          requires:
+            - static-code-analysis/scan
