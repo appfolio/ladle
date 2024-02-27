@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  title: ladle
+  description: An application for assisting in Appfolio's implementation of code stewardship
+  tags:
+    - rails
+  annotations: {}
+  name: ladle
+spec:
+  type: service
+  lifecycle: deprecated
+  owner: mighty-dux
